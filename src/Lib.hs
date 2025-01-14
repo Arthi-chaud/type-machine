@@ -18,13 +18,13 @@ data User = User
 
 -- class IsUser a where
 --     getName :: String
---
---     -- or
---     name_ :: String
-
+--     getId :: Int
+--     otherProp :: MaybeChar
 $(defineIs ''User)
 
 $(type_ "UserWithoutName" ''User)
 
 -- instance IsUser UserWithoutName where
---     getId = getField @"i"
+--     getId = getField @"id"
+
+-- $(deriveIs ''User ''UserWithoutName)

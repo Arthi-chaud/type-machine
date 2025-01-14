@@ -7,25 +7,25 @@
 
 module TH where
 
+import Control.Monad (forM)
 import Data.Char (toUpper)
+import Data.Foldable (find)
 import GHC.Records (HasField (getField))
 import Language.Haskell.TH
+import Text.Printf (printf)
 
 type_ :: String -> Name -> Q [Dec]
 type_ newTyName source = do
     (TyConI (DataD ctx _ tyVarBinds kind cons l)) <- reify source
     let consWithoutName = (\(RecC _ vbt) -> RecC (mkName newTyName) $ filter (\(n, _, _) -> nameBase n /= "name") vbt) <$> cons
-    is <- deriveIs source (mkName newTyName)
-    return $ is ++ [DataD ctx (mkName newTyName) tyVarBinds kind consWithoutName l]
+    return [DataD ctx (mkName newTyName) tyVarBinds kind consWithoutName l]
 
 defineIs :: Name -> Q [Dec]
 defineIs tyName = do
     (TyConI (DataD _ _ _ _ cons _)) <- reify tyName
     classTypeVar <- newName "a"
-    RecC _ vbt <- case cons of
-        [a] -> return a
-        _ -> fail "Expected type to have exactly one constructor"
-    let classFuncs = vbtToFunDec classTypeVar <$> vbt
+    vbts <- getRecordConstructorVars cons
+    let classFuncs = vbtToFunDec classTypeVar <$> vbts
     return [ClassD [] (isClassName tyName) [PlainTV classTypeVar BndrReq] [] classFuncs]
   where
     vbtToFunDec :: Name -> VarBangType -> Dec
@@ -45,14 +45,26 @@ isClassName tyName = mkName $ "Is" ++ capitalize (nameBase tyName)
 
 deriveIs :: Name -> Name -> Q [Dec]
 deriveIs sourceType destType = do
-    (TyConI (DataD _ _ _ _ cons _)) <- reify sourceType
-    RecC _ vbt <- case cons of
-        [a] -> return a
-        _ -> fail "Expected type to have exactly one constructor"
+    (TyConI (DataD _ _ _ _ destCons _)) <- reify destType
+    (TyConI (DataD _ _ _ _ sourceCons _)) <- reify sourceType
+    destVbts <- getRecordConstructorVars destCons
+    sourceVbts <- getRecordConstructorVars sourceCons
     let className = isClassName sourceType
-    classFuncs <- vbtToFunDec `mapM` vbt
+    classFuncs <- forM sourceVbts $ \vbt@(n, _, _) -> case getVbrByName n destVbts of
+        Nothing ->
+            fail
+                ( printf
+                    "Type-Machine Error: Cannot define instance of %s for %s. Field %s is missing in %s "
+                    (nameBase className)
+                    (nameBase destType)
+                    (nameBase n)
+                    (nameBase destType)
+                )
+        Just _ -> vbtToFunDec vbt
     return [InstanceD Nothing [] (AppT (ConT className) (ConT destType)) classFuncs]
   where
+    getVbrByName :: Name -> [VarBangType] -> Maybe VarBangType
+    getVbrByName name = find (\(n, _, _) -> nameBase n == nameBase name)
     vbtToFunDec :: VarBangType -> Q Dec
     vbtToFunDec (name, _, _) =
         let
@@ -60,3 +72,7 @@ deriveIs sourceType destType = do
             expr = [|getField @($(litT $ strTyLit $ nameBase name))|]
          in
             funD memberName [clause [] (normalB expr) []]
+
+getRecordConstructorVars :: (MonadFail m) => [Con] -> m [VarBangType]
+getRecordConstructorVars [RecC _ vbt] = return vbt
+getRecordConstructorVars _ = fail "Type-Machine Error: Expected type to have exactly one Record constructor"
