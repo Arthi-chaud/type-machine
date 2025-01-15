@@ -28,6 +28,8 @@ $(type_ "UserWithoutId" ''User (removeField "id"))
 
 $(type_ "UserWithoutOtherProp" ''User (removeField "otherProp"))
 
+$(type_ "UserWithRequiredOtherProp" ''User (requireField "otherProp"))
+
 $(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()
 main = putStrLn "Compilation successful :)"
