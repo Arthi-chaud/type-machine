@@ -1,4 +1,6 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- | Note: As for now, tests are just here to verify that simple code using TM compiles
 module Main (main) where
@@ -18,11 +20,14 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutName" ''User)
+$(type_ "UserWithoutId" ''User (removeField "id"))
 
--- instance IsUser UserWithoutName where
---     getId = getField @"id"
+-- Does not work since id is a required field or user
 
--- $(deriveIs ''User ''UserWithoutName)
+-- $(deriveIs ''User ''UserWithoutId)
+
+$(type_ "UserWithoutOtherProp" ''User (removeField "otherProp"))
+
+$(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()
 main = putStrLn "Compilation successful :)"

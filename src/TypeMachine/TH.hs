@@ -4,15 +4,14 @@ import Language.Haskell.TH hiding (Type, reifyType)
 import TypeMachine.TH.Internal.Type
 import TypeMachine.TH.Is
 
-removeField :: Name -> Type -> Type
+removeField :: String -> Type -> Type
 removeField nameToRemove ty = ty{fields = filteredFields}
   where
     -- TODO: Warning if field does not exist
-    filteredFields = filter (\(n, _, _) -> nameBase n /= strNameToRemove) $ fields ty
-    strNameToRemove = nameBase nameToRemove
+    filteredFields = filter (\(n, _, _) -> nameBase n /= nameToRemove) $ fields ty
 
-type_ :: String -> Name -> Q [Dec]
-type_ newTyName source = do
+type_ :: String -> Name -> (Type -> Type) -> Q [Dec]
+type_ newTyName source f = do
     tmType <- reifyType source
-    let newType = (removeField (mkName "name") tmType){name = mkName newTyName}
+    let newType = (f tmType){name = mkName newTyName}
     return [typeToDec newType]
