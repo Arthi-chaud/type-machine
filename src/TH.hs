@@ -18,7 +18,15 @@ data TMType = TMType
     { name :: Name
     , fields :: [VarBangType]
     , typeParams :: [(Name, Maybe Kind)]
+    -- TODO Store original type
     }
+
+removeField :: Name -> TMType -> TMType
+removeField nameToRemove ty = ty{fields = filteredFields}
+  where
+    -- TODO: Warning if field does not exist
+    filteredFields = filter (\(n, _, _) -> nameBase n /= strNameToRemove) $ fields ty
+    strNameToRemove = nameBase nameToRemove
 
 tmTypeToTHType :: TMType -> Dec
 tmTypeToTHType (TMType n f tp) =
@@ -43,26 +51,28 @@ thTypeToTMType (DataD _ tyName tybndrs _ cons _) = do
     return $ TMType tyName vbt tparams
 thTypeToTMType _ = fail "Unsupported data type"
 
+reifyTMType :: Name -> Q TMType
+reifyTMType n = do
+    res <- reify n
+    case res of
+        TyConI ty -> thTypeToTMType ty
+        _ -> fail "Invalid Name. Expected Datatype declaration"
+
 getRecordConstructorVars :: (MonadFail m) => [Con] -> m [VarBangType]
 getRecordConstructorVars [RecC _ vbt] = return vbt
 getRecordConstructorVars _ = fail "Type-Machine Error: Expected type to have exactly one Record constructor"
 
 type_ :: String -> Name -> Q [Dec]
 type_ newTyName source = do
-    (TyConI ty) <- reify source
-    tmType <- thTypeToTMType ty
-    let typeWithoutName =
-            tmType
-                { name = mkName newTyName
-                , fields = filter (\(n, _, _) -> nameBase n /= "name") (fields tmType)
-                }
-    return [tmTypeToTHType typeWithoutName]
+    tmType <- reifyTMType source
+    let newType = (removeField (mkName "name") tmType){name = mkName newTyName}
+    return [tmTypeToTHType newType]
 
 defineIs :: Name -> Q [Dec]
 defineIs tyName = do
-    (TyConI (DataD _ _ _ _ cons _)) <- reify tyName
+    ty <- reifyTMType tyName
     classTypeVar <- newName "a"
-    vbts <- getRecordConstructorVars cons
+    let vbts = fields ty
     let classFuncs = vbtToFunDec classTypeVar <$> vbts
     return [ClassD [] (isClassName tyName) [PlainTV classTypeVar BndrReq] [] classFuncs]
   where
@@ -83,11 +93,9 @@ isClassName tyName = mkName $ "Is" ++ capitalize (nameBase tyName)
 
 deriveIs :: Name -> Name -> Q [Dec]
 deriveIs sourceTypeName destTypeName = do
-    (TyConI destType) <- reify destTypeName
-    (TyConI sourceType) <- reify sourceTypeName
-    TMType _ destVbts _ <- thTypeToTMType destType
-    TMType _ sourceVbts _ <- thTypeToTMType sourceType
-    let className = mkName ("Is" ++ (nameBase sourceTypeName))
+    destVbts <- fields <$> reifyTMType destTypeName
+    sourceVbts <- fields <$> reifyTMType sourceTypeName
+    let className = mkName ("Is" ++ nameBase sourceTypeName)
     classFuncs <- forM sourceVbts $ \vbt@(n, _, _) -> case getVbrByName n destVbts of
         Nothing ->
             fail
