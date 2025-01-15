@@ -20,15 +20,15 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutId" ''User (removeField "id"))
+$(type_ "UserWithoutId" ''User (remove "id"))
 
 -- Does not work since id is a required field or user
 
 -- $(deriveIs ''User ''UserWithoutId)
 
-$(type_ "UserWithoutOtherProp" ''User (removeField "otherProp"))
+$(type_ "UserWithoutOtherProp" ''User (remove "otherProp"))
 
-$(type_ "UserWithRequiredOtherProp" ''User (requireField "otherProp"))
+$(type_ "UserWithRequiredOtherProp" ''User (require "otherProp"))
 
 $(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()

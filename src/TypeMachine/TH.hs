@@ -1,17 +1,17 @@
-module TypeMachine.TH (removeField, requireField, type_, deriveIs, defineIs) where
+module TypeMachine.TH (remove, require, type_, deriveIs, defineIs) where
 
 import Language.Haskell.TH hiding (Type, reifyType)
 import TypeMachine.TH.Internal.Type
 import TypeMachine.TH.Is
 
-removeField :: String -> Type -> Type
-removeField nameToRemove ty = ty{fields = filteredFields}
+remove :: String -> Type -> Type
+remove nameToRemove ty = ty{fields = filteredFields}
   where
     -- TODO: Warning if field does not exist
     filteredFields = filter (\(n, _, _) -> nameBase n /= nameToRemove) $ fields ty
 
-requireField :: String -> Type -> Type
-requireField fieldNameToRequire ty = ty{fields = markAsRequired <$> fields ty}
+require :: String -> Type -> Type
+require fieldNameToRequire ty = ty{fields = markAsRequired <$> fields ty}
   where
     -- TODO Handle any type that is monadplus
     markAsRequired (n, b, AppT (ConT p) t)
