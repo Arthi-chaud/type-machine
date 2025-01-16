@@ -41,11 +41,12 @@ library:
   source-dirs: src
   dependencies:
   - template-haskell
+  - mtl
   exposed-modules:
+  - TypeMachine.TypeFunction
   - TypeMachine.TH
   - TypeMachine.TH.Is
   - TypeMachine.TH.Internal.Type
-
 tests:
   type-machine-test:
     main:                Spec.hs

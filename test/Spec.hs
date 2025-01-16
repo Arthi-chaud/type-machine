@@ -6,6 +6,7 @@
 module Main (main) where
 
 import TypeMachine.TH
+import TypeMachine.TypeFunction
 import Prelude hiding (id)
 
 data User = User
