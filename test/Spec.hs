@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-unused-binds #-}
 
 -- | Note: As for now, tests are just here to verify that simple code using TM compiles
 module Main (main) where
@@ -30,6 +31,8 @@ $(type_ "UserWithoutId" ''User (remove "id"))
 $(type_ "UserWithoutOtherProp" ''User (remove "otherProp"))
 
 $(type_ "UserWithRequiredOtherProp" ''User (require "otherProp"))
+
+$(type_ "X" ''User (remove "idonotexist"))
 
 $(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()

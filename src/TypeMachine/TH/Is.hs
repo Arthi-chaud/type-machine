@@ -9,7 +9,7 @@ import GHC.Records (getField)
 import Language.Haskell.TH hiding (Type, reifyType)
 import qualified Language.Haskell.TH as TH
 import Text.Printf
-import TypeMachine.TH.Internal.Type
+import TypeMachine.TH.Internal.Type (fields, reifyType)
 import TypeMachine.TH.Internal.Utils
 
 -- | Get the name of the 'Is' class generated for the given type

@@ -44,6 +44,7 @@ library:
   - mtl
   exposed-modules:
   - TypeMachine.TypeFunction
+  - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is
   - TypeMachine.TH.Internal.Type

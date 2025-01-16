@@ -1,10 +1,15 @@
-module TypeMachine.TypeFunction where
+module TypeMachine.TypeFunction (
+    TypeFunction,
+    runTypeFunction,
+    remove,
+    require,
+) where
 
+import Control.Monad (forM_)
 import Control.Monad.Writer.Lazy
 import Language.Haskell.TH hiding (Type)
+import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.TH.Internal.Type
-
-type TypeMachineLog = String
 
 -- | A 'TypeFunction' is a function that takes a 'Type' as parameter and can:
 --
@@ -15,15 +20,15 @@ type TypeFunction a = Type -> WriterT [TypeMachineLog] Q a
 -- | Execute a 'TypeFunction' and issue logs
 runTypeFunction :: Type -> TypeFunction a -> Q a
 runTypeFunction t f = do
-    (res, _logs) <- runWriterT (f t)
-    -- TODO Format and format logs
+    (res, logs) <- runWriterT (f t)
+    forM_ logs $ reportWarning . formatLog
     return res
 
 remove :: String -> TypeFunction Type
-remove nameToRemove ty = return ty{fields = filteredFields}
-  where
-    -- TODO: Warning if field does not exist
-    filteredFields = filter (\(n, _, _) -> nameBase n /= nameToRemove) $ fields ty
+remove nameToRemove ty =
+    if not (hasField (mkName nameToRemove) ty)
+        then tell ["No field '" ++ nameToRemove ++ "' in type."] >> return ty
+        else return ty{fields = filter (\(n, _, _) -> nameBase n /= nameToRemove) $ fields ty}
 
 require :: String -> TypeFunction Type
 require fieldNameToRequire ty = return ty{fields = markAsRequired <$> fields ty}

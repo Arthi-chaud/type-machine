@@ -1,12 +1,17 @@
 module TypeMachine.TH.Internal.Type (
     Type (..),
+    getField,
+    hasField,
     typeToDec,
     decToType,
     reifyType,
 ) where
 
 import Data.Functor ((<&>))
+import Data.List (find)
+import Data.Maybe (isJust)
 import Language.Haskell.TH.Syntax hiding (Type, reifyType)
+import qualified Language.Haskell.TH.Syntax as TH (Type)
 import TypeMachine.TH.Internal.Utils
 
 -- | Data structure to easily manipulate Template Haskell's 'Language.Haskell.TH.Dec.DataD'
@@ -15,10 +20,17 @@ data Type = Type
     -- ^ Name of the data type
     , fields :: [VarBangType]
     -- ^ Fields of the data type
+    -- TODO Make fields [(String, BT)]
     , typeParams :: [(Name, Maybe Kind)]
     -- ^ Type parameter of the ADT
     -- TODO Store original type
     }
+
+getField :: Name -> Type -> Maybe (Bang, TH.Type)
+getField fieldName ty = (\(_, b, t) -> (b, t)) <$> find (\(n, _, _) -> nameBase fieldName == nameBase n) (fields ty)
+
+hasField :: Name -> Type -> Bool
+hasField n t = isJust $ getField n t
 
 -- | Turns a 'Type' back to a Template Haskell 'Language.Haskell.TH.Dec'
 typeToDec :: Type -> Dec
