@@ -43,12 +43,13 @@ library:
   dependencies:
   - template-haskell
   - mtl
+  - containers
   exposed-modules:
   - TypeMachine.TypeFunction
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is
-  - TypeMachine.TH.Internal.Type
+  - TypeMachine.Type
 tests:
   type-machine-test:
     main:                Spec.hs

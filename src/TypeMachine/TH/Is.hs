@@ -4,7 +4,7 @@
 module TypeMachine.TH.Is (isClassName, deriveIs, defineIs) where
 
 import Control.Monad (MonadPlus (mzero), forM)
-import Data.List (find)
+import qualified Data.Map.Strict as Map
 import GHC.Records (getField)
 import Language.Haskell.TH hiding (Type, reifyType)
 import qualified Language.Haskell.TH as TH
@@ -31,38 +31,39 @@ isClassName tyName = mkName $ "Is" ++ capitalize (nameBase tyName)
 -- @
 deriveIs :: Name -> Name -> Q [Dec]
 deriveIs sourceTypeName destTypeName = do
-    destVbts <- fields <$> reifyType destTypeName
-    sourceVbts <- fields <$> reifyType sourceTypeName
+    destFields <- fields <$> reifyType destTypeName
+    sourceFields <- fields <$> reifyType sourceTypeName
     let className = mkName ("Is" ++ nameBase sourceTypeName)
-    classFuncs <- forM sourceVbts $ \vbt@(n, _, t) -> case getVbtByName n destVbts of
-        Nothing ->
-            fieldIsOptional t >>= \isOpt ->
-                if isOpt
-                    then vbtToMemptyFunDec vbt
-                    else
-                        fail
-                            ( printf
-                                "Type-Machine Error: Cannot define instance of %s for %s. Field '%s' is missing in %s "
-                                (nameBase className)
-                                (nameBase destTypeName)
-                                (nameBase n)
-                                (nameBase destTypeName)
-                            )
-        Just _ -> vbtToFunDec vbt
+    classFuncs <- forM (Map.toList sourceFields) $ \(n, (_, t)) -> case Map.lookup n destFields of
+        Just _ -> fieldNameToFunDec n
+        Nothing -> do
+            isOpt <- fieldIsOptional t
+            if isOpt
+                then fieldNameToMemptyFunDec n
+                else
+                    fail
+                        ( printf
+                            "Type-Machine Error: Cannot define instance of %s for %s. Field '%s' is missing in %s "
+                            (nameBase className)
+                            destTypeStr
+                            n
+                            destTypeStr
+                        )
     return [InstanceD Nothing [] (AppT (ConT className) (ConT destTypeName)) classFuncs]
   where
-    getVbtByName n = find (\(n1, _, _) -> nameBase n == nameBase n1)
-    vbtToMemptyFunDec (n, _, _) =
-        funD (fieldNameToIsFuncName n) [clause [] (normalB [|const mzero|]) []]
-    vbtToFunDec (n, _, _) =
+    destTypeStr = nameBase destTypeName
+    fieldNameToMemptyFunDec n =
+        funD (mkName $ fieldNameToIsFuncName n) [clause [] (normalB [|const mzero|]) []]
+    fieldNameToFunDec n =
         let
-            memberName = fieldNameToIsFuncName n
-            expr = [|getField @($(litT $ strTyLit $ nameBase n))|]
+            memberName = mkName $ fieldNameToIsFuncName n
+            expr = [|getField @($(litT $ strTyLit n))|]
          in
             funD memberName [clause [] (normalB expr) []]
+    -- Returns true is field is instance of Monad plus
+    -- TODO handle non-parametric monadplus-es
     fieldIsOptional :: TH.Type -> Q Bool
     fieldIsOptional (AppT t _) = isInstance ''MonadPlus [t]
-    -- TODO handle non-parametric monadplus-es
     fieldIsOptional _ = return False
 
 -- | Define the 'Is' class for the given type
@@ -80,16 +81,17 @@ defineIs tyName = do
     ty <- reifyType tyName
     classTypeVar <- newName "a"
     let vbts = fields ty
-    let classFuncs = vbtToFunDec classTypeVar <$> vbts
+    let classFuncs = vbtToFunDec classTypeVar <$> Map.toList vbts
     return [ClassD [] (isClassName tyName) [PlainTV classTypeVar BndrReq] [] classFuncs]
   where
-    vbtToFunDec :: Name -> VarBangType -> Dec
-    vbtToFunDec classtypeVar (n, _, t) =
+    -- vbtToFunDec a id Int == getId :: a -> Int
+    vbtToFunDec :: Name -> (String, BangType) -> Dec
+    vbtToFunDec classtypeVar (n, (_, t)) =
         let
-            memberName = fieldNameToIsFuncName n
+            memberName = mkName $ fieldNameToIsFuncName n
          in
             SigD memberName (AppT (AppT ArrowT (VarT classtypeVar)) t)
 
 -- Internal
-fieldNameToIsFuncName :: Name -> Name
-fieldNameToIsFuncName n = mkName $ (("get" ++) . capitalize) $ nameBase n
+fieldNameToIsFuncName :: String -> String
+fieldNameToIsFuncName = ("get" ++) . capitalize

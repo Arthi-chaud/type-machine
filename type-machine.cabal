@@ -29,7 +29,7 @@ library
       TypeMachine.Log
       TypeMachine.TH
       TypeMachine.TH.Is
-      TypeMachine.TH.Internal.Type
+      TypeMachine.Type
   other-modules:
       TypeMachine.TH.Internal.Utils
       Paths_type_machine
@@ -44,6 +44,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers
     , mtl
     , template-haskell
   default-language: Haskell2010

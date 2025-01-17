@@ -7,6 +7,7 @@ module TypeMachine.TypeFunction (
 
 import Control.Monad (forM_)
 import Control.Monad.Writer.Lazy
+import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type)
 import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.Type
@@ -26,14 +27,14 @@ runTypeFunction t f = do
 
 remove :: String -> TypeFunction Type
 remove nameToRemove ty =
-    if not (hasField (mkName nameToRemove) ty)
+    if not (hasField nameToRemove ty)
         then tell ["No field '" ++ nameToRemove ++ "' in type."] >> return ty
-        else return ty{fields = filter (\(n, _, _) -> nameBase n /= nameToRemove) $ fields ty}
+        else return ty{fields = Map.delete nameToRemove (fields ty)}
 
 require :: String -> TypeFunction Type
-require fieldNameToRequire ty = return ty{fields = markAsRequired <$> fields ty}
+require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
   where
     -- TODO Handle any type that is monadplus
-    markAsRequired (n, b, AppT (ConT p) t)
-        | fieldNameToRequire == nameBase n && nameBase p == "Maybe" = (n, b, t)
-    markAsRequired r = r
+    markAsRequired n (b, AppT (ConT p) t)
+        | fieldNameToRequire == n && nameBase p == "Maybe" = (b, t)
+    markAsRequired _ r = r
