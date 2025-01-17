@@ -34,6 +34,10 @@ $(type_ "UserWithRequiredOtherProp" ''User (require "otherProp"))
 
 $(type_ "X" ''User (remove "idonotexist"))
 
+newtype MyNewType = MyNewType {x :: Int}
+
+$(type_ "MyNewTypeEmpty" ''MyNewType (remove "x"))
+
 $(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()
 main = putStrLn "Compilation successful :)"

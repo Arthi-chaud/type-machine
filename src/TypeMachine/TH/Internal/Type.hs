@@ -50,14 +50,16 @@ typeToDec (Type n f tp) =
 --
 -- For this to succeed, the input type must have exactly one record constructor
 decToType :: (MonadFail m) => Dec -> m Type
-decToType (DataD _ tyName tybndrs _ cons _) = do
-    vbt <- getRecordConstructorVars cons
+decToType dec = do
+    (tyName, tybndrs, vbt) <- case dec of
+        (DataD _ tyName tybndrs _ cons _) -> (tyName,tybndrs,) <$> getRecordConstructorVars cons
+        (NewtypeD _ tyName tybndrs _ con _) -> (tyName,tybndrs,) <$> getRecordConstructorVars [con]
+        _ -> fail "Unsupported data type" -- TODO Clearer message
     let tparams =
             tybndrs <&> \case
                 PlainTV n _ -> (n, Nothing)
                 KindedTV n _ k -> (n, Just k)
     return $ Type tyName vbt tparams
-decToType _ = fail "Unsupported data type" -- TODO Clearer message
 
 -- | Wrapper around the TH's 'reify' function. Fails if the type is not a datatype declaration
 reifyType :: Name -> Q Type
