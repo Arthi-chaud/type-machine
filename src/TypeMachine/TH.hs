@@ -1,8 +1,8 @@
 module TypeMachine.TH (type_, deriveIs, defineIs) where
 
 import Language.Haskell.TH hiding (Type, reifyType)
-import TypeMachine.TH.Internal.Type
 import TypeMachine.TH.Is
+import TypeMachine.Type
 import TypeMachine.TypeFunction (TypeFunction, runTypeFunction)
 
 -- | Entrypoint of TypeMachine. Create a new data type using a source type and a 'TypeFunction'

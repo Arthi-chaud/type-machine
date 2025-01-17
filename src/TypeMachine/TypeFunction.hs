@@ -9,7 +9,7 @@ import Control.Monad (forM_)
 import Control.Monad.Writer.Lazy
 import Language.Haskell.TH hiding (Type)
 import TypeMachine.Log (TypeMachineLog, formatLog)
-import TypeMachine.TH.Internal.Type
+import TypeMachine.Type
 
 -- | A 'TypeFunction' is a function that takes a 'Type' as parameter and can:
 --

@@ -1,4 +1,4 @@
-module TypeMachine.TH.Internal.Type (
+module TypeMachine.Type (
     Type (..),
     getField,
     hasField,
