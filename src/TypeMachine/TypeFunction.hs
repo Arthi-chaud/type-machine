@@ -3,9 +3,10 @@ module TypeMachine.TypeFunction (
     runTypeFunction,
     remove,
     require,
+    pick,
 ) where
 
-import Control.Monad (forM_)
+import Control.Monad (forM_, unless)
 import Control.Monad.Writer.Lazy
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type)
@@ -38,3 +39,10 @@ require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKe
     markAsRequired n (b, AppT (ConT p) t)
         | fieldNameToRequire == n && nameBase p == "Maybe" = (b, t)
     markAsRequired _ r = r
+
+pick :: [String] -> TypeFunction Type
+pick namesToPick ty = do
+    forM_ namesToPick $ \nameToPick ->
+        unless (hasField nameToPick ty) $
+            tell ["No field '" ++ nameToPick ++ "' in type."]
+    return ty{fields = Map.filterWithKey (\k _ -> k `elem` namesToPick) (fields ty)}

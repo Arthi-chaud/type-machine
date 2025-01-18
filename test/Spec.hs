@@ -38,6 +38,10 @@ newtype MyNewType = MyNewType {x :: Int}
 
 $(type_ "MyNewTypeEmpty" ''MyNewType (remove "x"))
 
+$(type_ "UserWithId" ''User (pick ["id"]))
+
+$(type_ "UserWithWarning" ''User (pick ["x"]))
+
 $(deriveIs ''User ''UserWithoutOtherProp)
 main :: IO ()
 main = putStrLn "Compilation successful :)"
