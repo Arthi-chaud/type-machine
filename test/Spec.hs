@@ -6,6 +6,7 @@
 -- | Note: As for now, tests are just here to verify that simple code using TM compiles
 module Main (main) where
 
+import Data.Bifunctor (Bifunctor (bimap))
 import TypeMachine.TH
 import TypeMachine.TypeFunction
 import Prelude hiding (id)
@@ -22,25 +23,35 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutId" (toType ''User >>= remove "id"))
+$(type_ "UserWithoutId" (remove "id" =<< toType ''User))
 
 -- Does not work since id is a required field or user
 
 -- $(deriveIs ''User ''UserWithoutId)
 
-$(type_ "UserWithoutOtherProp" (toType ''User >>= remove "otherProp"))
+$(type_ "UserWithoutOtherProp" (remove "otherProp" =<< toType ''User))
 
-$(type_ "UserWithRequiredOtherProp" (toType ''User >>= require "otherProp"))
+$(type_ "UserWithRequiredOtherProp" (require "otherProp" =<< toType ''User))
 
-$(type_ "X" (toType ''User >>= remove "idonotexist"))
+$(type_ "X" (remove "idonotexist" =<< toType ''User))
 
 newtype MyNewType = MyNewType {x :: Int}
 
-$(type_ "MyNewTypeEmpty" (toType ''MyNewType >>= remove "x"))
+$(type_ "MyNewTypeEmpty" (remove "x" =<< toType ''MyNewType))
 
-$(type_ "UserWithId" (toType ''User >>= pick ["id"]))
+$(type_ "UserId" (pick ["id"] =<< toType ''User))
 
-$(type_ "UserWithWarning" (toType ''User >>= pick ["x"]))
+$(type_ "UserWithWarning" (pick ["x"] =<< toType ''User))
+
+-- Has all the fields except id
+$( type_
+    "UserWithoutId2"
+    ( do
+        t1 <- toType ''UserWithoutId
+        t2 <- toType ''User
+        intersection t1 t2
+    )
+ )
 
 $(deriveIs ''User ''UserWithoutOtherProp)
 
