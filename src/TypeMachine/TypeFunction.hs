@@ -12,7 +12,6 @@ module TypeMachine.TypeFunction (
 
 import Control.Monad (forM_, unless)
 import Control.Monad.Writer.Lazy
-import Data.Map.Merge.Strict
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type, reifyType)
 import TypeMachine.Internal.Utils (keepKeys)
@@ -36,15 +35,35 @@ runT t = do
     return res
 
 -- | Takes an ADT name, returns the `Type` for that ADT
+--
+-- A utilitary function to use 'reifyType' in the 'T' monad
 toType :: Name -> T Type
 toType = lift . reifyType
 
+-- | Removes a single field by name
+--
+-- Issues a warning when a key is not in the input 'Type'
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > remove 'a' =<< toType ''A
+--
+--  data _ = { b :: Int }
+-- @
 remove :: String -> TypeFunction Type
 remove nameToRemove ty =
     if not (hasField nameToRemove ty)
         then tell ["No field '" ++ nameToRemove ++ "' in type."] >> return ty
         else return ty{fields = Map.delete nameToRemove (fields ty)}
 
+-- | Mark fields are required
+--
+-- @
+--  > data A = A { a :: Maybe Int, b :: Int }
+--  > require "a" =<< toType ''A
+--
+--  data _ = { a :: Int, b :: Int }
+-- @
 require :: String -> TypeFunction Type
 require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
   where
@@ -53,6 +72,16 @@ require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKe
         | fieldNameToRequire == n && nameBase p == "Maybe" = (b, t)
     markAsRequired _ r = r
 
+-- | Pick/Select fields by name
+--
+-- Issues a warning when a key is not in the input 'Type'
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > pick ["a", "c"] =<< toType ''A
+--
+--  data _ = { a :: Int }
+-- @
 pick :: [String] -> TypeFunction Type
 pick namesToPick ty = do
     forM_ namesToPick $ \nameToPick ->
@@ -60,34 +89,22 @@ pick namesToPick ty = do
             tell ["No field '" ++ nameToPick ++ "' in type."]
     return ty{fields = keepKeys namesToPick (fields ty)}
 
--- | Merges to types together
+-- | Merges two types together. Removes overloapping fields
 --
---  Removes overloapping fields
 -- @
---  data A = A { a :: Int, b :: Int }
---
---  data B = B { b :: String, c :: Void }
---
---  > merge B A
+--  > data A = A { a :: Int, b :: Int }
+--  > data B = B { b :: String, c :: Void }
+--  > intersection B A
 --
 --  data _ = { a :: Int, c :: Void }
 -- @
 intersection :: Type -> TypeFunction Type
-intersection a b = return $ a{fields = finalFields}
-  where
-    finalFields =
-        merge
-            preserveMissing
-            preserveMissing
-            (zipWithMaybeMatched (\_ _ _ -> Nothing))
-            (fields a)
-            (fields b)
+intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
 
 -- | Get the names of the fields in in type
 --
 -- @
---  data A = A { a :: Int, b :: Int }
---
+--  > data A = A { a :: Int, b :: Int }
 --  > keysOf A
 --
 --  ['a', 'b']
