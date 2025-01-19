@@ -5,6 +5,7 @@ module TypeMachine.TypeFunction (
     require,
     pick,
     intersection,
+    keysOf,
 ) where
 
 import Control.Monad (forM_, unless)
@@ -72,3 +73,15 @@ intersection a b = return $ a{fields = finalFields}
             (zipWithMaybeMatched (\_ _ _ -> Nothing))
             (fields a)
             (fields b)
+
+-- | Get the names of the fields in in type
+--
+-- @
+--  data A = A { a :: Int, b :: Int }
+--
+--  > keysOf A
+--
+--  ['a', 'b']
+-- @
+keysOf :: TypeFunction [String]
+keysOf = return . Map.keys . fields
