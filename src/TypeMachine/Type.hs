@@ -11,7 +11,6 @@ import Data.Bifunctor (first)
 import Data.Functor ((<&>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Data.Maybe (isJust)
 import Language.Haskell.TH.Syntax hiding (Type, reifyType)
 import qualified Language.Haskell.TH.Syntax as TH (Type)
 import TypeMachine.TH.Internal.Utils

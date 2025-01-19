@@ -3,12 +3,11 @@ module TypeMachine.TH (type_, deriveIs, defineIs) where
 import Language.Haskell.TH hiding (Type, reifyType)
 import TypeMachine.TH.Is
 import TypeMachine.Type
-import TypeMachine.TypeFunction (TypeFunction, runTypeFunction)
+import TypeMachine.TypeFunction (T, runT)
 
--- | Entrypoint of TypeMachine. Create a new data type using a source type and a 'TypeFunction'
-type_ :: String -> Name -> TypeFunction Type -> Q [Dec]
-type_ newTyName source f = do
-    tmType <- reifyType source
-    fRes <- runTypeFunction tmType f
+-- | Entrypoint of TypeMachine. Create a new data type using a 'T' computation
+type_ :: String -> T Type -> Q [Dec]
+type_ newTyName t = do
+    fRes <- runT t
     let newType = fRes{name = mkName newTyName}
     return [typeToDec newType]

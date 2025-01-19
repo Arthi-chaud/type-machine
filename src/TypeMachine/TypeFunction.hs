@@ -1,34 +1,43 @@
 module TypeMachine.TypeFunction (
+    T,
     TypeFunction,
-    runTypeFunction,
+    runT,
     remove,
     require,
     pick,
     intersection,
     keysOf,
+    toType,
 ) where
 
 import Control.Monad (forM_, unless)
 import Control.Monad.Writer.Lazy
 import Data.Map.Merge.Strict
 import qualified Data.Map.Strict as Map
-import Language.Haskell.TH hiding (Type)
+import Language.Haskell.TH hiding (Type, reifyType)
 import TypeMachine.Internal.Utils (keepKeys)
 import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.Type
 
--- | A 'TypeFunction' is a function that takes a 'Type' as parameter and can:
+-- | The 'T' monad can:
 --
 -- - Emit warning messages (e.g. when omitting that does not exist)
 -- - Take advantage of the 'Language.Haskell.TH.Q' monad's features
-type TypeFunction a = Type -> WriterT [TypeMachineLog] Q a
+type T a = WriterT [TypeMachineLog] Q a
 
--- | Execute a 'TypeFunction' and issue logs
-runTypeFunction :: Type -> TypeFunction a -> Q a
-runTypeFunction t f = do
-    (res, logs) <- runWriterT (f t)
+-- | A 'TypeFunction' is a 'T' computation that takes a 'Type' as parameter
+type TypeFunction a = Type -> T a
+
+-- | Execute a 'T' computation and issue logs
+runT :: T a -> Q a
+runT t = do
+    (res, logs) <- runWriterT t
     forM_ logs $ reportWarning . formatLog
     return res
+
+-- | Takes an ADT name, returns the `Type` for that ADT
+toType :: Name -> T Type
+toType = lift . reifyType
 
 remove :: String -> TypeFunction Type
 remove nameToRemove ty =

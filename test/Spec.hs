@@ -22,25 +22,25 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutId" ''User (remove "id"))
+$(type_ "UserWithoutId" (toType ''User >>= remove "id"))
 
 -- Does not work since id is a required field or user
 
 -- $(deriveIs ''User ''UserWithoutId)
 
-$(type_ "UserWithoutOtherProp" ''User (remove "otherProp"))
+$(type_ "UserWithoutOtherProp" (toType ''User >>= remove "otherProp"))
 
-$(type_ "UserWithRequiredOtherProp" ''User (require "otherProp"))
+$(type_ "UserWithRequiredOtherProp" (toType ''User >>= require "otherProp"))
 
-$(type_ "X" ''User (remove "idonotexist"))
+$(type_ "X" (toType ''User >>= remove "idonotexist"))
 
 newtype MyNewType = MyNewType {x :: Int}
 
-$(type_ "MyNewTypeEmpty" ''MyNewType (remove "x"))
+$(type_ "MyNewTypeEmpty" (toType ''MyNewType >>= remove "x"))
 
-$(type_ "UserWithId" ''User (pick ["id"]))
+$(type_ "UserWithId" (toType ''User >>= pick ["id"]))
 
-$(type_ "UserWithWarning" ''User (pick ["x"]))
+$(type_ "UserWithWarning" (toType ''User >>= pick ["x"]))
 
 $(deriveIs ''User ''UserWithoutOtherProp)
 
