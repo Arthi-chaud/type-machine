@@ -4,12 +4,15 @@ module TypeMachine.TypeFunction (
     remove,
     require,
     pick,
+    intersection,
 ) where
 
 import Control.Monad (forM_, unless)
 import Control.Monad.Writer.Lazy
+import Data.Map.Merge.Strict
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type)
+import TypeMachine.Internal.Utils (keepKeys)
 import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.Type
 
@@ -45,4 +48,27 @@ pick namesToPick ty = do
     forM_ namesToPick $ \nameToPick ->
         unless (hasField nameToPick ty) $
             tell ["No field '" ++ nameToPick ++ "' in type."]
-    return ty{fields = Map.filterWithKey (\k _ -> k `elem` namesToPick) (fields ty)}
+    return ty{fields = keepKeys namesToPick (fields ty)}
+
+-- | Merges to types together
+--
+--  Removes overloapping fields
+-- @
+--  data A = A { a :: Int, b :: Int }
+--
+--  data B = B { b :: String, c :: Void }
+--
+--  > merge B A
+--
+--  data _ = { a :: Int, c :: Void }
+-- @
+intersection :: Type -> TypeFunction Type
+intersection a b = return $ a{fields = finalFields}
+  where
+    finalFields =
+        merge
+            preserveMissing
+            preserveMissing
+            (zipWithMaybeMatched (\_ _ _ -> Nothing))
+            (fields a)
+            (fields b)

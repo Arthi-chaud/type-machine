@@ -30,7 +30,7 @@ getField :: String -> Type -> Maybe (Bang, TH.Type)
 getField fieldName ty = Map.lookup fieldName (fields ty)
 
 hasField :: String -> Type -> Bool
-hasField n t = isJust $ getField n t
+hasField n t = Map.member n $ fields t
 
 -- | Turns a 'Type' back to a Template Haskell 'Language.Haskell.TH.Dec'
 typeToDec :: Type -> Dec

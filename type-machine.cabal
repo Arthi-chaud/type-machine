@@ -31,6 +31,7 @@ library
       TypeMachine.TH.Is
       TypeMachine.Type
   other-modules:
+      TypeMachine.Internal.Utils
       TypeMachine.TH.Internal.Utils
       Paths_type_machine
   autogen-modules:

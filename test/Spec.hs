@@ -43,5 +43,6 @@ $(type_ "UserWithId" ''User (pick ["id"]))
 $(type_ "UserWithWarning" ''User (pick ["x"]))
 
 $(deriveIs ''User ''UserWithoutOtherProp)
+
 main :: IO ()
 main = putStrLn "Compilation successful :)"
