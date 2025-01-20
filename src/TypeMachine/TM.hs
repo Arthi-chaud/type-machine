@@ -4,16 +4,17 @@ module TypeMachine.TM (
     remove,
     require,
     pick,
+    omit,
     intersection,
     keysOf,
     toType,
 ) where
 
-import Control.Monad (forM_, unless)
+import Control.Monad (forM_)
 import Control.Monad.Writer.Lazy
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type, reifyType)
-import TypeMachine.Internal.Utils (keepKeys)
+import TypeMachine.Internal.Utils (keepKeys, removeKeys)
 import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.Type
 
@@ -47,10 +48,7 @@ toType = lift . reifyType
 --  data _ = { b :: Int }
 -- @
 remove :: String -> Type -> TM Type
-remove nameToRemove ty =
-    if not (hasField nameToRemove ty)
-        then tell ["No field '" ++ nameToRemove ++ "' in type."] >> return ty
-        else return ty{fields = Map.delete nameToRemove (fields ty)}
+remove nameToRemove = omit [nameToRemove]
 
 -- | Mark fields are required
 --
@@ -80,10 +78,29 @@ require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKe
 -- @
 pick :: [String] -> Type -> TM Type
 pick namesToPick ty = do
-    forM_ namesToPick $ \nameToPick ->
-        unless (hasField nameToPick ty) $
-            tell ["No field '" ++ nameToPick ++ "' in type."]
+    tell $ (\n -> "No field '" ++ n ++ "' in type.") <$> unknownfields
     return ty{fields = keepKeys namesToPick (fields ty)}
+  where
+    unknownfields = filter (`hasField` ty) namesToPick
+
+-- | Remove fields by name
+--
+-- Issues a warning when a key is not in the input 'Type'
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > pick ["b", "c"] =<< toType ''A
+--
+--  data _ = { a :: Int }
+-- @
+omit :: [String] -> Type -> TM Type
+omit namesToOmit ty = do
+    tell $ (\n -> "No field '" ++ n ++ "' in type.") <$> unknownfields
+    return ty{fields = removeKeys namesToOmit (fields ty)}
+  where
+    unknownfields = filter (`hasField` ty) namesToOmit
+
+-- omit :: TODO
 
 -- | Merges two types together. Removes overloapping fields
 --
