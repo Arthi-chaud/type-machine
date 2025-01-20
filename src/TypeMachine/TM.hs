@@ -1,7 +1,6 @@
-module TypeMachine.TypeFunction (
-    T,
-    TypeFunction,
-    runT,
+module TypeMachine.TM (
+    TM,
+    runTM,
     remove,
     require,
     pick,
@@ -18,26 +17,23 @@ import TypeMachine.Internal.Utils (keepKeys)
 import TypeMachine.Log (TypeMachineLog, formatLog)
 import TypeMachine.Type
 
--- | The 'T' monad can:
+-- | The 'TM' (*TypeMachine*) monad can:
 --
 -- - Emit warning messages (e.g. when omitting that does not exist)
 -- - Take advantage of the 'Language.Haskell.TH.Q' monad's features
-type T a = WriterT [TypeMachineLog] Q a
+type TM a = WriterT [TypeMachineLog] Q a
 
--- | A 'TypeFunction' is a 'T' computation that takes a 'Type' as parameter
-type TypeFunction a = Type -> T a
-
--- | Execute a 'T' computation and issue logs
-runT :: T a -> Q a
-runT t = do
+-- | Execute a 'TM' computation and issue logs
+runTM :: TM a -> Q a
+runTM t = do
     (res, logs) <- runWriterT t
     forM_ logs $ reportWarning . formatLog
     return res
 
 -- | Takes an ADT name, returns the `Type` for that ADT
 --
--- A utilitary function to use 'reifyType' in the 'T' monad
-toType :: Name -> T Type
+-- A utilitary function to use 'reifyType' in the 'TM' monad
+toType :: Name -> TM Type
 toType = lift . reifyType
 
 -- | Removes a single field by name
@@ -50,7 +46,7 @@ toType = lift . reifyType
 --
 --  data _ = { b :: Int }
 -- @
-remove :: String -> TypeFunction Type
+remove :: String -> Type -> TM Type
 remove nameToRemove ty =
     if not (hasField nameToRemove ty)
         then tell ["No field '" ++ nameToRemove ++ "' in type."] >> return ty
@@ -64,7 +60,7 @@ remove nameToRemove ty =
 --
 --  data _ = { a :: Int, b :: Int }
 -- @
-require :: String -> TypeFunction Type
+require :: String -> Type -> TM Type
 require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
   where
     -- TODO Handle any type that is monadplus
@@ -82,7 +78,7 @@ require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKe
 --
 --  data _ = { a :: Int }
 -- @
-pick :: [String] -> TypeFunction Type
+pick :: [String] -> Type -> TM Type
 pick namesToPick ty = do
     forM_ namesToPick $ \nameToPick ->
         unless (hasField nameToPick ty) $
@@ -98,7 +94,7 @@ pick namesToPick ty = do
 --
 --  data _ = { a :: Int, c :: Void }
 -- @
-intersection :: Type -> TypeFunction Type
+intersection :: Type -> Type -> TM Type
 intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
 
 -- | Get the names of the fields in in type
@@ -109,5 +105,5 @@ intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
 --
 --  ['a', 'b']
 -- @
-keysOf :: TypeFunction [String]
+keysOf :: Type -> TM [String]
 keysOf = return . Map.keys . fields

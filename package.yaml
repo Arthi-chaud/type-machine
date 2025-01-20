@@ -45,7 +45,7 @@ library:
   - mtl
   - containers
   exposed-modules:
-  - TypeMachine.TypeFunction
+  - TypeMachine.TM
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is

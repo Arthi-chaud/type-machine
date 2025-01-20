@@ -6,9 +6,8 @@
 -- | Note: As for now, tests are just here to verify that simple code using TM compiles
 module Main (main) where
 
-import Data.Bifunctor (Bifunctor (bimap))
 import TypeMachine.TH
-import TypeMachine.TypeFunction
+import TypeMachine.TM
 import Prelude hiding (id)
 
 data User = User
