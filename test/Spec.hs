@@ -31,6 +31,8 @@ $(type_ "UserWithoutId" (remove "id" <:> toType ''User))
 
 $(type_ "UserWithoutOtherProp" (remove "otherProp" <:> toType ''User))
 
+$(deriveIs ''User ''UserWithoutOtherProp)
+
 $(type_ "UserWithRequiredOtherProp" (require "otherProp" <:> toType ''User))
 
 $(type_ "X" (remove "idonotexist" <:> toType ''User))
@@ -46,16 +48,9 @@ $(type_ "UserWithWarning" (pick ["x"] <:> toType ''User))
 -- $(type_ "CheckApplicationFixity" (flip pick <:> toType ''User $ ["id"]))
 
 -- Has all the fields except id
-$( type_
-    "UserWithoutId2"
-    ( do
-        t1 <- toType ''UserWithoutId
-        t2 <- toType ''User
-        intersection t1 t2
-    )
- )
+$(type_ "UserWithoutId2" (intersection <:> toType ''UserWithoutId <:> toType ''User))
 
-$(deriveIs ''User ''UserWithoutOtherProp)
+$(type_ "PartialUser" (partial <:> toType ''User))
 
 main :: IO ()
 main = putStrLn "Compilation successful :)"

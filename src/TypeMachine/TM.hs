@@ -8,9 +8,11 @@ module TypeMachine.TM (
     intersection,
     keysOf,
     toType,
+    partial,
+    partial',
 ) where
 
-import Control.Monad (forM_)
+import Control.Monad (forM, forM_)
 import Control.Monad.Writer.Lazy
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type, reifyType)
@@ -124,3 +126,34 @@ intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
 -- @
 keysOf :: Type -> TM [String]
 keysOf = return . Map.keys . fields
+
+-- | Marks all fields as 'Maybe'
+--
+--  Fields that already have a 'Maybe' type will not be changed.
+-- @
+--  > data A = A { a :: Int, b :: Maybe Int }
+--  > partial '<:>' toType ''A
+--
+--  data _ = { a :: Maybe Int, b :: Maybe Int }
+-- @
+partial :: Type -> TM Type
+partial = partial_ False
+
+-- | Similar to 'partial'. Marks all fields as 'Maybe'
+--
+--  Fields that already have a 'Maybe' type will be wrapped in a 'Maybe'
+-- @
+--  > data A = A { a :: Int, b :: Maybe Int }
+--  > partial' '<:>' toType ''A
+--
+--  data _ = { a :: Maybe Int, b :: Maybe (Maybe Int) }
+-- @
+partial' :: Type -> TM Type
+partial' = partial_ True
+
+partial_ :: Bool -> Type -> TM Type
+partial_ rewrapMaybes ty = do
+    nullableFields <- forM (fields ty) $ \field@(b, t) -> case t of
+        AppT (ConT w) _ | nameBase w == "Maybe" && not rewrapMaybes -> return field
+        _ -> lift $ (b,) <$> [t|Maybe $(return t)|]
+    return ty{fields = nullableFields}
