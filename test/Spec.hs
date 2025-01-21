@@ -6,9 +6,7 @@
 -- | Note: As for now, tests are just here to verify that simple code using TM compiles
 module Main (main) where
 
-import TypeMachine.TH
-import TypeMachine.TM
-import TypeMachine.TM.Syntax
+import TypeMachine
 import Prelude hiding (id)
 
 data User = User

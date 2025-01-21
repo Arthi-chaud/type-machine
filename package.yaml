@@ -45,12 +45,14 @@ library:
   - mtl
   - containers
   exposed-modules:
+  - TypeMachine
+  - TypeMachine.Functions
   - TypeMachine.TM
+  - TypeMachine.Type
   - TypeMachine.TM.Syntax
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is
-  - TypeMachine.Type
 tests:
   type-machine-test:
     main:                Spec.hs

@@ -25,12 +25,14 @@ source-repository head
 
 library
   exposed-modules:
+      TypeMachine
+      TypeMachine.Functions
       TypeMachine.TM
+      TypeMachine.Type
       TypeMachine.TM.Syntax
       TypeMachine.Log
       TypeMachine.TH
       TypeMachine.TH.Is
-      TypeMachine.Type
   other-modules:
       TypeMachine.Internal.Utils
       TypeMachine.TH.Internal.Utils
