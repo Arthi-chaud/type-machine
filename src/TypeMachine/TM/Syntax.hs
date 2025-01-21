@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module TypeMachine.TM.Syntax ((<:>), (<.>)) where
+module TypeMachine.TM.Syntax ((<:>), (<::>), (<.>)) where
 
+import Language.Haskell.TH (Name)
 import TypeMachine.TM
 import TypeMachine.TM.Liftable
+import TypeMachine.Type
 
 -- | Apply a `TM a` value to a 'TM' computation that expects an `a`
 --
@@ -14,6 +16,14 @@ import TypeMachine.TM.Liftable
 -- @
 (<:>) :: (LiftableTMFunction (a -> b)) => (a -> b) -> TM a -> b
 (<:>) = applyTM
+
+-- | Allows passing a name to a 'TM' function that takes a 'Type'
+--
+-- @
+--  f '<::>' ''User == f '<:>' 'toType' ''User
+-- @
+(<::>) :: (LiftableTMFunction (Type -> a)) => (Type -> a) -> Name -> a
+f <::> n = f <:> toType n
 
 -- | Apply a `a` value to a 'TM' computation that expects an `a`.
 --

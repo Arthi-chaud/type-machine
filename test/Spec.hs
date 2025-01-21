@@ -23,34 +23,34 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutId" (remove "id" <:> toType ''User))
+$(type_ "UserWithoutId" (remove "id" <::> ''User))
 
 -- Does not work since id is a required field or user
 
 -- $(deriveIs ''User ''UserWithoutId)
 
-$(type_ "UserWithoutOtherProp" (remove "otherProp" <:> toType ''User))
+$(type_ "UserWithoutOtherProp" (remove "otherProp" <::> ''User))
 
 $(deriveIs ''User ''UserWithoutOtherProp)
 
-$(type_ "UserWithRequiredOtherProp" (require "otherProp" <:> toType ''User))
+$(type_ "UserWithRequiredOtherProp" (require "otherProp" <::> ''User))
 
-$(type_ "X" (remove "idonotexist" <:> toType ''User))
+$(type_ "X" (remove "idonotexist" <::> ''User))
 
 newtype MyNewType = MyNewType {x :: Int}
 
-$(type_ "MyNewTypeEmpty" (remove "x" <:> toType ''MyNewType))
+$(type_ "MyNewTypeEmpty" (remove "x" <::> ''MyNewType))
 
-$(type_ "UserId" (pick ["id"] <:> toType ''User))
+$(type_ "UserId" (pick ["id"] <::> ''User))
 
-$(type_ "UserWithWarning" (pick ["x"] <:> toType ''User))
+$(type_ "UserWithWarning" (pick ["x"] <::> ''User))
 
--- $(type_ "CheckApplicationFixity" (flip pick <:> toType ''User $ ["id"]))
+-- $(type_ "CheckApplicationFixity" (flip pick <::> ''User $ ["id"]))
 
 -- Has all the fields except id
-$(type_ "UserWithoutId2" (intersection <:> toType ''UserWithoutId <:> toType ''User))
+$(type_ "UserWithoutId2" (intersection <::> ''UserWithoutId <::> ''User))
 
-$(type_ "PartialUser" (partial <:> toType ''User))
+$(type_ "PartialUser" (partial <::> ''User))
 
 main :: IO ()
 main = putStrLn "Compilation successful :)"
