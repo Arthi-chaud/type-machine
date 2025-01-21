@@ -8,6 +8,7 @@ module Main (main) where
 
 import TypeMachine.TH
 import TypeMachine.TM
+import TypeMachine.TM.Syntax
 import Prelude hiding (id)
 
 data User = User
@@ -22,25 +23,27 @@ data User = User
 --     otherProp :: MaybeChar
 $(defineIs ''User)
 
-$(type_ "UserWithoutId" (remove "id" =<< toType ''User))
+$(type_ "UserWithoutId" (remove "id" <:> toType ''User))
 
 -- Does not work since id is a required field or user
 
 -- $(deriveIs ''User ''UserWithoutId)
 
-$(type_ "UserWithoutOtherProp" (remove "otherProp" =<< toType ''User))
+$(type_ "UserWithoutOtherProp" (remove "otherProp" <:> toType ''User))
 
-$(type_ "UserWithRequiredOtherProp" (require "otherProp" =<< toType ''User))
+$(type_ "UserWithRequiredOtherProp" (require "otherProp" <:> toType ''User))
 
-$(type_ "X" (remove "idonotexist" =<< toType ''User))
+$(type_ "X" (remove "idonotexist" <:> toType ''User))
 
 newtype MyNewType = MyNewType {x :: Int}
 
-$(type_ "MyNewTypeEmpty" (remove "x" =<< toType ''MyNewType))
+$(type_ "MyNewTypeEmpty" (remove "x" <:> toType ''MyNewType))
 
-$(type_ "UserId" (pick ["id"] =<< toType ''User))
+$(type_ "UserId" (pick ["id"] <:> toType ''User))
 
-$(type_ "UserWithWarning" (pick ["x"] =<< toType ''User))
+$(type_ "UserWithWarning" (pick ["x"] <:> toType ''User))
+
+-- $(type_ "CheckApplicationFixity" (flip pick <:> toType ''User $ ["id"]))
 
 -- Has all the fields except id
 $( type_

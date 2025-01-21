@@ -46,6 +46,7 @@ library:
   - containers
   exposed-modules:
   - TypeMachine.TM
+  - TypeMachine.TM.Syntax
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is

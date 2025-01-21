@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       TypeMachine.TM
+      TypeMachine.TM.Syntax
       TypeMachine.Log
       TypeMachine.TH
       TypeMachine.TH.Is
@@ -33,6 +34,7 @@ library
   other-modules:
       TypeMachine.Internal.Utils
       TypeMachine.TH.Internal.Utils
+      TypeMachine.TM.Liftable
       Paths_type_machine
   autogen-modules:
       Paths_type_machine
