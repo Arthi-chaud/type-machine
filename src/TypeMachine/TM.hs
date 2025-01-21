@@ -43,7 +43,7 @@ toType = lift . reifyType
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
---  > remove 'a' =<< toType ''A
+--  > remove 'a' '<:>' 'toType' ''A
 --
 --  data _ = { b :: Int }
 -- @
@@ -54,7 +54,7 @@ remove nameToRemove = omit [nameToRemove]
 --
 -- @
 --  > data A = A { a :: Maybe Int, b :: Int }
---  > require "a" =<< toType ''A
+--  > require "a" '<:>' 'toType' ''A
 --
 --  data _ = { a :: Int, b :: Int }
 -- @
@@ -72,7 +72,7 @@ require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKe
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
---  > pick ["a", "c"] =<< toType ''A
+--  > pick ["a", "c"] '<:>' 'toType' ''A
 --
 --  data _ = { a :: Int }
 -- @
@@ -89,7 +89,7 @@ pick namesToPick ty = do
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
---  > pick ["b", "c"] =<< toType ''A
+--  > pick ["b", "c"] '<:>' 'toType' ''A
 --
 --  data _ = { a :: Int }
 -- @
@@ -107,7 +107,7 @@ omit namesToOmit ty = do
 -- @
 --  > data A = A { a :: Int, b :: Int }
 --  > data B = B { b :: String, c :: Void }
---  > intersection B A
+--  > intersection '<:>' 'toType' ''B  <:> 'toType' ''A
 --
 --  data _ = { a :: Int, c :: Void }
 -- @
@@ -118,7 +118,7 @@ intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
---  > keysOf A
+--  > keysOf '<:>' 'toType' ''A
 --
 --  ['a', 'b']
 -- @
