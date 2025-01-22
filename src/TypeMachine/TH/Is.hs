@@ -88,6 +88,9 @@ deriveIs sourceTypeName destTypeName = do
 --       getId :: a -> Int
 --       getName :: a -> String
 --
+--  instance IsUser User where
+--       ...
+--
 --  toUser :: (IsUser a) => a -> User
 --  toUser a = User (getId a) (getName a)
 -- @
@@ -97,9 +100,11 @@ defineIs tyName = do
     classTypeVar <- newName "a"
     let classFuncs = vbtToFunDec classTypeVar <$> Map.toList (fields ty)
     to <- defineTo tyName
+    isItself <- deriveIs tyName tyName
     return $
         ClassD [] (isClassName tyName) [PlainTV classTypeVar BndrReq] [] classFuncs
             : to
+            ++ isItself
   where
     -- vbtToFunDec a id Int == getId :: a -> Int
     vbtToFunDec :: Name -> (String, BangType) -> Dec
