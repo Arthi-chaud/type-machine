@@ -86,7 +86,7 @@ omit namesToOmit ty = do
     tell $ (\n -> "No field '" ++ n ++ "' in type.") <$> unknownfields
     return ty{fields = removeKeys namesToOmit (fields ty)}
   where
-    unknownfields = filter (`hasField` ty) namesToOmit
+    unknownfields = filter (\f -> not $ f `hasField` ty) namesToOmit
 
 -- omit :: TODO
 
