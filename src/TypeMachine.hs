@@ -5,6 +5,10 @@ module TypeMachine (
     -- * Main type functions
     module TypeMachine.Functions,
 
+    -- * Is
+    defineIs,
+    deriveIs,
+
     -- * Infixes
     (<:>),
     (<::>),
