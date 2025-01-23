@@ -1,7 +1,6 @@
 module TypeMachine.Functions (
     -- * Fields
     pick,
-    remove,
     omit,
 
     -- * Union and Intersection
@@ -28,33 +27,21 @@ import TypeMachine.Internal.Utils
 import TypeMachine.TM
 import TypeMachine.Type
 
--- | Removes a single field by name
---
--- Issues a warning when a key is not in the input 'Type'
---
--- @
---  > data A = A { a :: Int, b :: Int }
---  > remove 'a' '<:>' 'toType' ''A
---
---  data _ = { b :: Int }
--- @
-remove :: String -> Type -> TM Type
-remove nameToRemove = omit [nameToRemove]
-
 -- | Mark fields are required
 --
 -- @
 --  > data A = A { a :: Maybe Int, b :: Int }
---  > require "a" '<:>' 'toType' ''A
+--  > require ["a"] '<:>' 'toType' ''A
 --
 --  data _ = { a :: Int, b :: Int }
 -- @
-require :: String -> Type -> TM Type
-require fieldNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
+require :: [String] -> Type -> TM Type
+require fieldsNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
   where
     -- TODO Handle any type that is monadplus
+    -- TODO Issue warning if type is not optional
     markAsRequired n (b, AppT (ConT p) t)
-        | fieldNameToRequire == n && nameBase p == "Maybe" = (b, t)
+        | n `elem` fieldsNameToRequire && nameBase p == "Maybe" = (b, t)
     markAsRequired _ r = r
 
 -- | Pick/Select fields by name
