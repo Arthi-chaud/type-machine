@@ -24,6 +24,7 @@ data Type = Type
     , typeParams :: [(String, Maybe Kind)]
     -- ^ Type parameter of the ADT
     }
+    deriving (Show, Eq)
 
 getField :: String -> Type -> Maybe (Bang, TH.Type)
 getField fieldName ty = Map.lookup fieldName (fields ty)
