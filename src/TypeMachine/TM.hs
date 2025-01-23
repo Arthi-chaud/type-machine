@@ -1,6 +1,7 @@
 module TypeMachine.TM (
     TM,
     runTM,
+    execTM,
     toType,
 ) where
 
@@ -16,12 +17,16 @@ import TypeMachine.Type
 -- - Take advantage of the 'Language.Haskell.TH.Q' monad's features
 type TM a = WriterT [TypeMachineLog] Q a
 
--- | Execute a 'TM' computation and issue logs
+-- | Execute a 'TM' computation and issue logs using the 'Q' monad
 runTM :: TM a -> Q a
 runTM t = do
     (res, logs) <- runWriterT t
     forM_ logs $ reportWarning . formatLog
     return res
+
+-- | Runs a 'TM', returns the logs to issue and the computation result
+execTM :: TM a -> Q (a, [TypeMachineLog])
+execTM = runWriterT
 
 -- | Takes an ADT name, returns the `Type` for that ADT
 --
