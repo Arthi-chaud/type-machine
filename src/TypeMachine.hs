@@ -2,7 +2,7 @@ module TypeMachine (
     -- * Entrypoint
     type_,
 
-    -- * Main type functions
+    -- * Main Type Functions
     module TypeMachine.Functions,
 
     -- * Is
