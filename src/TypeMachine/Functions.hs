@@ -6,6 +6,9 @@ module TypeMachine.Functions (
 
     -- * Union and Intersection
     intersection,
+    intersection',
+    union,
+    union',
 
     -- * Optional
     require,
@@ -88,19 +91,61 @@ omit namesToOmit ty = do
   where
     unknownfields = filter (\f -> not $ f `hasField` ty) namesToOmit
 
--- omit :: TODO
-
--- | Merges two types together. Removes overloapping fields
+-- | Keep the fields present in both types
+--
+--  If keys overlap, prefer the type of the left type
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
 --  > data B = B { b :: String, c :: Void }
---  > intersection '<:>' 'toType' ''B  <:> 'toType' ''A
+--  > intersection '<:>' 'toType' ''A  <:> 'toType' ''B
 --
---  data _ = { a :: Int, c :: Void }
+--  data _ = { b :: Int }
 -- @
 intersection :: Type -> Type -> TM Type
 intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
+
+-- | Keep the fields present in both types
+--
+--  If keys overlap, prefer the type of the right type
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > data B = B { b :: String, c :: Void }
+--  > intersection' '<:>' 'toType' ''A  <:> 'toType' ''B
+--
+--  data _ = { b :: String }
+-- @
+intersection' :: Type -> Type -> TM Type
+intersection' = flip intersection
+
+-- | Merge two types together
+--
+--  If keys overlap, prefer the type of the left type
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > data B = B { b :: String, c :: Void }
+--  > union '<:>' 'toType' ''A  <:> 'toType' ''B
+--
+--  data _ = { a :: Int, b :: Int, c :: Void }
+-- @
+union :: Type -> Type -> TM Type
+union a b = return $ a{fields = Map.union (fields a) (fields b)}
+
+-- | Merge two types together
+--
+--  If keys overlap, prefer the type of the right type
+--
+-- @
+--  > data A = A { a :: Int, b :: Int }
+--  > data B = B { b :: String, c :: Void }
+--  > union '<:>' 'toType' ''A  <:> 'toType' ''B
+--
+--  data _ = { a :: Int, b :: String, c :: Void }
+-- @
+union' :: Type -> Type -> TM Type
+union' = flip union
 
 -- | Get the names of the fields in in type
 --
