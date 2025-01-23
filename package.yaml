@@ -26,6 +26,7 @@ default-extensions:
 - TemplateHaskell
 - LambdaCase
 - TupleSections
+- RankNTypes
 
 ghc-options:
 - -Wall
@@ -61,5 +62,9 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wno-unused-top-binds
     dependencies:
     - type-machine
+    - hspec
+    - template-haskell
+    - containers

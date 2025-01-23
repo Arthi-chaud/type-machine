@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 
 module TypeMachine.TH.Is (isClassName, toFuncName, deriveIs, defineIs) where
