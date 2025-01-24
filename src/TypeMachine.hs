@@ -17,6 +17,8 @@ module TypeMachine (
     -- * Internal types
     Type,
     TM,
+
+    -- * Log types
 ) where
 
 import TypeMachine.Functions

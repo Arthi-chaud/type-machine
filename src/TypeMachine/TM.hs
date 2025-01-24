@@ -1,14 +1,17 @@
+{-# LANGUAGE ImpredicativeTypes #-}
+
 module TypeMachine.TM (
     TM,
     runTM,
     execTM,
+    addLog,
     toType,
 ) where
 
 import Control.Monad (forM_)
 import Control.Monad.Writer.Lazy
 import Language.Haskell.TH hiding (Type, reifyType)
-import TypeMachine.Log (TypeMachineLog, formatLog)
+import TypeMachine.Log
 import TypeMachine.Type
 
 -- | The 'TM' (*TypeMachine*) monad can:
@@ -16,6 +19,10 @@ import TypeMachine.Type
 -- - Emit warning messages (e.g. when omitting that does not exist)
 -- - Take advantage of the 'Language.Haskell.TH.Q' monad's features
 type TM a = WriterT [TypeMachineLog] Q a
+
+-- | Add a log message to issue
+addLog :: TypeMachineLog -> TM ()
+addLog l = tell [l]
 
 -- | Execute a 'TM' computation and issue logs using the 'Q' monad
 runTM :: TM a -> Q a

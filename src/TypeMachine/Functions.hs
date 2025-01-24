@@ -19,11 +19,12 @@ module TypeMachine.Functions (
 )
 where
 
-import Control.Monad (forM)
+import Control.Monad (forM, forM_)
 import Control.Monad.Writer.Strict
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type)
 import TypeMachine.Internal.Utils
+import TypeMachine.Log
 import TypeMachine.TM
 import TypeMachine.Type
 
@@ -56,7 +57,7 @@ require fieldsNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithK
 -- @
 pick :: [String] -> Type -> TM Type
 pick namesToPick ty = do
-    tell $ (\n -> "No field '" ++ n ++ "' in type.") <$> unknownfields
+    forM_ unknownfields $ addLog . fieldNotInType
     return ty{fields = keepKeys namesToPick (fields ty)}
   where
     unknownfields = filter (`hasField` ty) namesToPick
@@ -73,7 +74,7 @@ pick namesToPick ty = do
 -- @
 omit :: [String] -> Type -> TM Type
 omit namesToOmit ty = do
-    tell $ (\n -> "No field '" ++ n ++ "' in type.") <$> unknownfields
+    forM_ unknownfields $ addLog . fieldNotInType
     return ty{fields = removeKeys namesToOmit (fields ty)}
   where
     unknownfields = filter (\f -> not $ f `hasField` ty) namesToOmit

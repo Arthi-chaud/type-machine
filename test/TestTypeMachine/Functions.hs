@@ -2,10 +2,10 @@ module TestTypeMachine.Functions (specs) where
 
 import Control.Monad
 import qualified Data.Map.Strict as Map
-import Language.Haskell.TH (Bang (Bang), SourceStrictness (NoSourceStrictness), SourceUnpackedness (NoSourceUnpackedness), mkName, nameBase, runQ)
-import Language.Haskell.TH.Syntax (Type (..))
+import Language.Haskell.TH hiding (bang)
 import Test.Hspec
 import TypeMachine
+import TypeMachine.Log
 import TypeMachine.TM (execTM)
 import TypeMachine.Type (Type (..))
 
@@ -49,7 +49,7 @@ specs =
                 describe "issue warning" $ do
                     it "field does not exist" $ do
                         (user2, logs) <- testTM (omit [nameKey, "idonotexist"] userType)
-                        logs `shouldBe` ["No field 'idonotexist' in type."]
+                        logs `shouldBe` [fieldNotInType "idonotexist"]
                         length (fields user2) `shouldBe` length (fields userType) - 1
 
             describe "required" $ do
@@ -61,11 +61,11 @@ specs =
                 describe "issue warning" $ do
                     it "field does not exist" $ do
                         (user2, logs) <- testTM (require ["idonotexist"] userType)
-                        logs `shouldBe` ["field 'idonotexist' does not exist in type."]
+                        logs `shouldBe` [fieldNotInType "idonotexist"]
                         fields user2 `shouldBe` fields userType
                     it "field is not optional" $ do
                         (user2, logs) <- testTM (require [idKey] userType)
-                        logs `shouldBe` ["field 'id' is not optional."]
+                        logs `shouldBe` [fieldNotOptional "id"]
                         fields user2 `shouldBe` fields userType
 
             describe "pick" $ do
@@ -77,18 +77,18 @@ specs =
                 describe "issue warning" $ do
                     it "field does not exist" $ do
                         (emptyType, logs) <- testTM (pick ["a", idKey] userType)
-                        logs `shouldBe` ["field 'a' does not exists in type."]
+                        logs `shouldBe` [fieldNotInType "a"]
                         length (fields emptyType) `shouldBe` 0
                     it "result type is empty" $ do
                         (emptyType, logs) <- testTM (pick [] userType)
-                        logs `shouldBe` ["result type is empty."]
+                        logs `shouldBe` [emptyResultType]
                         length (fields emptyType) `shouldBe` 0
 
                     it "field does not exist and result type is empty" $ do
                         (emptyType, logs) <- testTM (pick ["a"] userType)
                         logs
-                            `shouldBe` [ "field 'a' does not exist in type."
-                                       , "result type is empty."
+                            `shouldBe` [ fieldNotInType "a"
+                                       , emptyResultType
                                        ]
                         length (fields emptyType) `shouldBe` 0
 
@@ -101,7 +101,7 @@ specs =
                 describe "issue warning" $ do
                     it "result type is empty" $ do
                         (emptyType, logs) <- testTM (pick ["a"] userType)
-                        logs `shouldBe` ["field 'a' does not exists in type."]
+                        logs `shouldBe` [fieldNotInType "a"]
                         length (fields emptyType) `shouldBe` 0
 
             describe "union" $ do
