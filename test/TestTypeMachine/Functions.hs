@@ -78,7 +78,7 @@ specs =
                     it "field does not exist" $ do
                         (emptyType, logs) <- testTM (pick ["a", idKey] userType)
                         logs `shouldBe` [fieldNotInType "a"]
-                        length (fields emptyType) `shouldBe` 0
+                        length (fields emptyType) `shouldBe` 1
                     it "result type is empty" $ do
                         (emptyType, logs) <- testTM (pick [] userType)
                         logs `shouldBe` [emptyResultType]
@@ -100,9 +100,10 @@ specs =
                     Map.toList (fields intersectionRes) `shouldBe` [(idKey, userIdType)]
                 describe "issue warning" $ do
                     it "result type is empty" $ do
-                        (emptyType, logs) <- testTM (pick ["a"] userType)
-                        logs `shouldBe` [fieldNotInType "a"]
-                        length (fields emptyType) `shouldBe` 0
+                        (emptyType, _) <- testTM (pick [] userType)
+                        (res, logs) <- testTM (intersection emptyType userType)
+                        logs `shouldBe` [emptyResultType]
+                        length (fields res) `shouldBe` 0
 
             describe "union" $ do
                 it "should have all fields" $ do

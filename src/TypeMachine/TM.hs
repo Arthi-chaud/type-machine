@@ -1,10 +1,16 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 
 module TypeMachine.TM (
+    -- * Monad
     TM,
     runTM,
     execTM,
+
+    -- * Logging
     addLog,
+    addLogs,
+
+    -- * Utils
     toType,
 ) where
 
@@ -23,6 +29,9 @@ type TM a = WriterT [TypeMachineLog] Q a
 -- | Add a log message to issue
 addLog :: TypeMachineLog -> TM ()
 addLog l = tell [l]
+
+addLogs :: [TypeMachineLog] -> TM ()
+addLogs = tell
 
 -- | Execute a 'TM' computation and issue logs using the 'Q' monad
 runTM :: TM a -> Q a

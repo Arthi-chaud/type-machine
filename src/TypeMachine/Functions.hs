@@ -19,7 +19,7 @@ module TypeMachine.Functions (
 )
 where
 
-import Control.Monad (forM, forM_)
+import Control.Monad (forM, when)
 import Control.Monad.Writer.Strict
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type)
@@ -37,13 +37,17 @@ import TypeMachine.Type
 --  data _ = { a :: Int, b :: Int }
 -- @
 require :: [String] -> Type -> TM Type
-require fieldsNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithKey` fields ty}
+require fieldsNameToRequire ty = do
+    logUnknownFields fieldsNameToRequire ty
+    updatedFields <- mapM (uncurry markAsRequired) (Map.toList $ fields ty)
+    return ty{fields = Map.fromList updatedFields}
   where
     -- TODO Handle any type that is monadplus
-    -- TODO Issue warning if type is not optional
     markAsRequired n (b, AppT (ConT p) t)
-        | n `elem` fieldsNameToRequire && nameBase p == "Maybe" = (b, t)
-    markAsRequired _ r = r
+        | n `elem` fieldsNameToRequire && nameBase p == "Maybe" = return (n, (b, t))
+    markAsRequired n r
+        | n `elem` fieldsNameToRequire = addLog (fieldNotOptional n) >> return (n, r)
+    markAsRequired n r = return (n, r)
 
 -- | Pick/Select fields by name
 --
@@ -57,10 +61,10 @@ require fieldsNameToRequire ty = return ty{fields = markAsRequired `Map.mapWithK
 -- @
 pick :: [String] -> Type -> TM Type
 pick namesToPick ty = do
-    forM_ unknownfields $ addLog . fieldNotInType
-    return ty{fields = keepKeys namesToPick (fields ty)}
-  where
-    unknownfields = filter (`hasField` ty) namesToPick
+    logUnknownFields namesToPick ty
+    let finalType = ty{fields = keepKeys namesToPick (fields ty)}
+    logIfEmptyType finalType
+    return finalType
 
 -- | Remove fields by name
 --
@@ -74,10 +78,8 @@ pick namesToPick ty = do
 -- @
 omit :: [String] -> Type -> TM Type
 omit namesToOmit ty = do
-    forM_ unknownfields $ addLog . fieldNotInType
+    logUnknownFields namesToOmit ty
     return ty{fields = removeKeys namesToOmit (fields ty)}
-  where
-    unknownfields = filter (\f -> not $ f `hasField` ty) namesToOmit
 
 -- | Keep the fields present in both types
 --
@@ -91,7 +93,10 @@ omit namesToOmit ty = do
 --  data _ = { b :: Int }
 -- @
 intersection :: Type -> Type -> TM Type
-intersection a b = return $ a{fields = Map.intersection (fields a) (fields b)}
+intersection a b = do
+    let finalType = a{fields = Map.intersection (fields a) (fields b)}
+    logIfEmptyType finalType
+    return finalType
 
 -- | Keep the fields present in both types
 --
@@ -178,3 +183,11 @@ partial_ rewrapMaybes ty = do
         AppT (ConT w) _ | nameBase w == "Maybe" && not rewrapMaybes -> return field
         _ -> lift $ (b,) <$> [t|Maybe $(return t)|]
     return ty{fields = nullableFields}
+
+-- Utils for logs
+
+logUnknownFields :: [String] -> Type -> TM ()
+logUnknownFields fieldNames ty = addLogs $ fieldNotInType <$> filter (\fName -> not (fName `hasField` ty)) fieldNames
+
+logIfEmptyType :: Type -> TM ()
+logIfEmptyType ty = when (Map.null $ fields ty) $ addLog emptyResultType
