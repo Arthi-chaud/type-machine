@@ -1,26 +1,24 @@
 name:                type-machine
 version:             0.1.0.0
-github:              "githubuser/type-machine"
+github:              "Arthi-chaud/type-machine"
 license:             BSD-3-Clause
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2025 Author name here"
+author:              "Arthi-chaud"
+maintainer:          "aj530@kent.ac.uk"
+copyright:           "2025 Arthi-chaud"
 
 extra-source-files:
 - README.md
 - CHANGELOG.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
+synopsis:            Template Haskell-based Type functions on record types in Haskell
+category:            Types 
 
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/type-machine#readme>
+description:         Please see the README on GitHub at <https://github.com/Arthi-chaud/type-machine#readme>
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- template-haskell
 
 default-extensions:
 - TemplateHaskell
@@ -42,9 +40,7 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
-  - template-haskell
   - mtl
-  - containers
   exposed-modules:
   - TypeMachine
   - TypeMachine.Functions
@@ -54,6 +50,7 @@ library:
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is
+
 tests:
   type-machine-test:
     main:                Spec.hs
@@ -66,5 +63,3 @@ tests:
     dependencies:
     - type-machine
     - hspec
-    - template-haskell
-    - containers
