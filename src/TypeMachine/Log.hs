@@ -7,6 +7,7 @@ module TypeMachine.Log (
     fieldNotInType,
     emptyResultType,
     fieldNotOptional,
+    duplicateKey,
 
     -- * Formatting
     formatLog,
@@ -26,3 +27,6 @@ emptyResultType = "Result type is empty."
 
 fieldNotOptional :: String -> TypeMachineLog
 fieldNotOptional f = "Field '" ++ f ++ "' is not optional."
+
+duplicateKey :: TypeMachineLog
+duplicateKey = "Some keys are duplicated."

@@ -1,7 +1,12 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module TypeMachine.Functions (
     -- * Fields
     pick,
     omit,
+
+    -- * Record
+    record,
 
     -- * Union and Intersection
     intersection,
@@ -21,8 +26,11 @@ where
 
 import Control.Monad (forM, when)
 import Control.Monad.Writer.Strict
+import qualified Data.Foldable as Set
 import qualified Data.Map.Strict as Map
-import Language.Haskell.TH hiding (Type)
+import qualified Data.Set as Set
+import Language.Haskell.TH hiding (Type, bang)
+import qualified Language.Haskell.TH as TH
 import TypeMachine.Internal.Utils
 import TypeMachine.Log
 import TypeMachine.TM
@@ -184,10 +192,33 @@ partial_ rewrapMaybes ty = do
         _ -> lift $ (b,) <$> [t|Maybe $(return t)|]
     return ty{fields = nullableFields}
 
+-- | Creates a type from a list of keys and a 'ToFieldType'
+--
+-- Issues a log if some keys are duplicated
+--
+-- @
+--  > record ["a", "b"] [t|Int|]
+--
+--  data _ = { a :: Int, b :: Int }
+-- @
+record :: [String] -> Q TH.Type -> TM Type
+record fNames t = do
+    when (Set.length fNameSet /= length fNames) $
+        addLog duplicateKey
+    when (null fNames) $
+        addLog emptyResultType
+    fType <- lift t
+    return $ Type (mkName "_") (Map.fromSet (const (bang, fType)) fNameSet) []
+  where
+    bang = Bang NoSourceUnpackedness NoSourceStrictness
+    fNameSet = Set.fromList fNames
+
 -- Utils for logs
 
 logUnknownFields :: [String] -> Type -> TM ()
-logUnknownFields fieldNames ty = addLogs $ fieldNotInType <$> filter (\fName -> not (fName `hasField` ty)) fieldNames
+logUnknownFields fieldNames ty =
+    addLogs $
+        fieldNotInType <$> filter (\fName -> not (fName `hasField` ty)) fieldNames
 
 logIfEmptyType :: Type -> TM ()
 logIfEmptyType ty = when (Map.null $ fields ty) $ addLog emptyResultType

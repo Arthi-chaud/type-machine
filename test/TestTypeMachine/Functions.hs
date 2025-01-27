@@ -146,5 +146,22 @@ specs =
                                 nameBase wrapper `shouldBe` "Maybe"
                                 wrapped `shouldBe` fType
                             x -> expectationFailure ("expected a type wrapped in maybe, got " ++ show x)
+
+            describe "record" $ do
+                it "should have all fields" $ do
+                    let fType = ConT (mkName "Maybe") `AppT` ConT (mkName "Int")
+                    (res, logs) <- testTM (record ["a", "b"] (return fType))
+                    logs `shouldBe` []
+                    length (fields res) `shouldBe` 2
+                    snd <$> Map.lookup "a" (fields res) `shouldBe` Just fType
+                describe "issue warning" $ do
+                    it "empty record" $ do
+                        (emptyType, logs) <- testTM (record [] (conT $ mkName "Int"))
+                        logs `shouldBe` [emptyResultType]
+                        length (fields emptyType) `shouldBe` 0
+                    it "duplicate key" $ do
+                        (res, logs) <- testTM (record ["a", "a"] (conT $ mkName "Int"))
+                        logs `shouldBe` [duplicateKey]
+                        length (fields res) `shouldBe` 1
   where
     testTM = runQ . execTM
