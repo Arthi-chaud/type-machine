@@ -48,6 +48,10 @@ specs =
                     Map.lookup nameKey (fields userWithId) `shouldBe` Nothing
                 describe "issue warning" $ do
                     it "field does not exist" $ do
+                        (user2, logs) <- testTM (omit [nameKey, idKey, otherPropKey] userType)
+                        logs `shouldBe` [emptyResultType]
+                        length (fields user2) `shouldBe` 0
+                    it "field does not exist" $ do
                         (user2, logs) <- testTM (omit [nameKey, "idonotexist"] userType)
                         logs `shouldBe` [fieldNotInType "idonotexist"]
                         length (fields user2) `shouldBe` length (fields userType) - 1

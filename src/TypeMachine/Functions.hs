@@ -80,14 +80,16 @@ pick namesToPick ty = do
 --
 -- @
 --  > data A = A { a :: Int, b :: Int }
---  > pick ["b", "c"] '<:>' 'toType' ''A
+--  > omit ["b", "c"] '<:>' 'toType' ''A
 --
 --  data _ = { a :: Int }
 -- @
 omit :: [String] -> Type -> TM Type
 omit namesToOmit ty = do
     logUnknownFields namesToOmit ty
-    return ty{fields = removeKeys namesToOmit (fields ty)}
+    let resultType = ty{fields = removeKeys namesToOmit (fields ty)}
+    logIfEmptyType resultType
+    return resultType
 
 -- | Keep the fields present in both types
 --
