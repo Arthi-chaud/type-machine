@@ -53,6 +53,17 @@ $(type_ "Vector3" (record ["x", "y", "z"] [t|Int|]))
 -- }
 
 -----
+-- Type Parameters
+-----
+
+data MyMaybe a = { content :: Maybe a }
+
+$(type_ "MyString" (apply [t|String|] <::> ''MyMaybe))
+-- data MyString = MyString { 
+--     content :: Maybe String
+-- }
+
+-----
 -- Is
 -----
 
