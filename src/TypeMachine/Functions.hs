@@ -29,7 +29,7 @@ module TypeMachine.Functions (
 where
 
 import Control.Arrow (Arrow (second))
-import Control.Monad (foldM, forM, when)
+import Control.Monad (foldM, forM, unless, when)
 import Control.Monad.Writer.Strict
 import qualified Data.Foldable as Set
 import Data.Generics
@@ -75,6 +75,7 @@ require fieldsNameToRequire ty = do
 -- @
 pick :: [String] -> Type -> TM Type
 pick namesToPick ty = do
+    failIfHasTypeVariables ty
     logUnknownFields namesToPick ty
     let finalType = ty{fields = keepKeys namesToPick (fields ty)}
     logIfEmptyType finalType
@@ -92,6 +93,7 @@ pick namesToPick ty = do
 -- @
 omit :: [String] -> Type -> TM Type
 omit namesToOmit ty = do
+    failIfHasTypeVariables ty
     logUnknownFields namesToOmit ty
     let resultType = ty{fields = removeKeys namesToOmit (fields ty)}
     logIfEmptyType resultType
@@ -110,6 +112,8 @@ omit namesToOmit ty = do
 -- @
 intersection :: Type -> Type -> TM Type
 intersection a b = do
+    failIfHasTypeVariables a
+    failIfHasTypeVariables b
     let finalType = a{fields = Map.intersection (fields a) (fields b)}
     logIfEmptyType finalType
     return finalType
@@ -140,7 +144,10 @@ intersection' = flip intersection
 --  data _ = { a :: Int, b :: Int, c :: Void }
 -- @
 union :: Type -> Type -> TM Type
-union a b = return $ a{fields = Map.union (fields a) (fields b)}
+union a b = do
+    failIfHasTypeVariables a
+    failIfHasTypeVariables b
+    return $ a{fields = Map.union (fields a) (fields b)}
 
 -- | Merge two types together
 --
@@ -274,3 +281,8 @@ logUnknownFields fieldNames ty =
 
 logIfEmptyType :: Type -> TM ()
 logIfEmptyType ty = when (Map.null $ fields ty) $ addLog emptyResultType
+
+failIfHasTypeVariables :: Type -> TM ()
+failIfHasTypeVariables ty =
+    unless (null $ typeParams ty) $
+        fail "Warning - The behaviour of this function is not tested on types with type parameters."
