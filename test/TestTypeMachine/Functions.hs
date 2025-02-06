@@ -1,6 +1,8 @@
 module TestTypeMachine.Functions (specs) where
 
+import Control.Exception.Base
 import Control.Monad
+import Data.Either (isLeft)
 import qualified Data.Map.Strict as Map
 import Data.Maybe
 import Language.Haskell.TH hiding (bang)
@@ -68,6 +70,9 @@ specs =
                         (user2, logs) <- testTM (omit [nameKey, "idonotexist"] userType)
                         logs `shouldBe` [fieldNotInType "idonotexist"]
                         length (fields user2) `shouldBe` length (fields userType) - 1
+                describe "fail" $ do
+                    it "has type parameters" $ do
+                        shouldFail (omit [nameKey] typeWithVar)
 
             describe "required" $ do
                 it "mark field as required" $ do
@@ -108,6 +113,9 @@ specs =
                                        , emptyResultType
                                        ]
                         length (fields emptyType) `shouldBe` 0
+                describe "fail" $ do
+                    it "has type parameters" $ do
+                        shouldFail (pick [nameKey] typeWithVar)
 
             describe "intersection" $ do
                 it "should have only common fields" $ do
@@ -121,6 +129,9 @@ specs =
                         (res, logs) <- testTM (intersection emptyType userType)
                         logs `shouldBe` [emptyResultType]
                         length (fields res) `shouldBe` 0
+                describe "fail" $ do
+                    it "has type parameters" $ do
+                        shouldFail (intersection userType typeWithVar)
 
             describe "union" $ do
                 it "should have all fields" $ do
@@ -142,6 +153,9 @@ specs =
                     length (fields unionRes) `shouldBe` 3
                     Map.lookup otherPropKey (fields unionRes)
                         `shouldBe` Just userOtherPropType
+                describe "fail" $ do
+                    it "has type parameters" $ do
+                        shouldFail (union userType typeWithVar)
 
             describe "partial" $ do
                 it "should wrap all fields with Maybe, except optional ones" $ do
@@ -205,3 +219,9 @@ specs =
                         logs `shouldBe` [noTypeParameter]
   where
     testTM = runQ . execTM
+    shouldFail tm = do
+        mres <-
+            try
+                (testTM tm) ::
+                IO (Either IOException (TypeMachine.Type, [String]))
+        mres `shouldSatisfy` isLeft
