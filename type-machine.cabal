@@ -54,6 +54,7 @@ library
       base >=4.7 && <5
     , containers
     , mtl
+    , syb
     , template-haskell
   default-language: Haskell2010
 
@@ -78,6 +79,7 @@ test-suite type-machine-test
       base >=4.7 && <5
     , containers
     , hspec
+    , syb
     , template-haskell
     , type-machine
   default-language: Haskell2010

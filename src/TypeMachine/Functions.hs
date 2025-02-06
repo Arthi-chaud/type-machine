@@ -19,14 +19,20 @@ module TypeMachine.Functions (
     partial,
     partial',
 
+    -- * Type Parameters
+    apply,
+    applyMany,
+
     -- * Utils
     keysOf,
 )
 where
 
-import Control.Monad (forM, when)
+import Control.Arrow (Arrow (second))
+import Control.Monad (foldM, forM, when)
 import Control.Monad.Writer.Strict
 import qualified Data.Foldable as Set
+import Data.Generics
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Language.Haskell.TH hiding (Type, bang)
@@ -214,6 +220,50 @@ record fNames t = do
   where
     bang = Bang NoSourceUnpackedness NoSourceStrictness
     fNameSet = Set.fromList fNames
+
+-- | Replaces the first type parameter with the given type
+--
+-- Issues a warning if there are no type variable
+--
+-- @
+--
+--  data A x = { a :: Maybe x }
+--
+--  > 'apply' [t|Int|] \<:\> 'toType' ''A
+--
+--  data _ = { a :: Maybe Int }
+-- @
+apply :: Q TH.Type -> Type -> TM Type
+apply _ ty@(Type _ _ []) = addLogs [noTypeParameter] >> return ty
+apply qt ty@(Type _ f ((tp, _) : tps)) = do
+    typeParameterValue <- lift qt
+    let fieldsWithTypeApplied = second (replaceTypeVar tp typeParameterValue) <$> f
+    return ty{fields = fieldsWithTypeApplied, typeParams = tps}
+  where
+    replaceTypeVar varName value src =
+        let
+            mapper t@(VarT n) =
+                if nameBase n == varName
+                    then value
+                    else t
+            mapper t = t
+         in
+            everywhere (mkT mapper) src
+
+-- | Applies multiple type arguments
+--
+-- Issues a warning if too many arguments are given
+--
+-- @
+--
+--  data A a b = { a :: Maybe a, b :: b }
+--
+--  > 'applyMany' ([t|Int|], [t|String|]) \<:\> 'toType' ''A
+--
+--  data _ = { a :: Maybe Int, b :: String }
+-- @
+applyMany :: [Q TH.Type] -> Type -> TM Type
+applyMany typeArgs ty = foldM (flip apply) ty typeArgs
 
 -- Utils for logs
 
