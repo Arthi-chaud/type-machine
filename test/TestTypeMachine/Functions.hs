@@ -2,18 +2,13 @@ module TestTypeMachine.Functions (specs) where
 
 import Control.Monad
 import qualified Data.Map.Strict as Map
+import Data.Maybe
 import Language.Haskell.TH hiding (bang)
 import Test.Hspec
 import TypeMachine
 import TypeMachine.Log
 import TypeMachine.TM (execTM)
 import TypeMachine.Type (Type (..))
-
-data User = User
-    { id :: Int
-    , name :: String
-    , otherProp :: Maybe Char
-    }
 
 specs :: Spec
 specs =
@@ -28,6 +23,24 @@ specs =
                 userNameType = (bang, ConT $ mkName "String")
                 userOtherPropRequiredType = ConT $ mkName "String"
                 userOtherPropType = (bang, AppT (ConT $ mkName "Maybe") userOtherPropRequiredType)
+                typeWithVar =
+                    Type
+                        (mkName "TypeWithVar")
+                        ( Map.fromList
+                            [ ("a", (bang, VarT $ mkName "a"))
+                            ,
+                                ( "b"
+                                ,
+                                    ( bang
+                                    , ConT (mkName "Maybe")
+                                        `AppT` ( ConT (mkName "Maybe")
+                                                    `AppT` VarT (mkName "b")
+                                               )
+                                    )
+                                )
+                            ]
+                        )
+                        [("a", Nothing), ("b", Nothing)]
                 userType =
                     Type
                         (mkName "User")
@@ -167,5 +180,28 @@ specs =
                         (res, logs) <- testTM (record ["a", "a"] (conT $ mkName "Int"))
                         logs `shouldBe` [duplicateKey]
                         length (fields res) `shouldBe` 1
+
+            describe "apply" $ do
+                it "should replace type variables" $ do
+                    (res, logs) <- testTM (applyMany [[t|Int|], [t|String|]] typeWithVar)
+                    typeParams res `shouldBe` []
+                    logs `shouldBe` []
+                    -- Check first type variable
+                    let aField = snd $ fromJust $ Map.lookup "a" $ fields res
+                    case aField of
+                        ConT n -> nameBase n `shouldBe` "Int"
+                        t -> expectationFailure $ "expected a type constructor, got: " ++ show t
+                    --  Check second type variable
+                    logs `shouldBe` []
+                    let bField = snd $ fromJust $ Map.lookup "b" $ fields res
+                    case bField of
+                        AppT (ConT _) (AppT (ConT _) (ConT n)) -> nameBase n `shouldBe` "String"
+                        t ->
+                            expectationFailure $
+                                "expected two nexted type constructors, got: " ++ show t
+                describe "issue warning" $ do
+                    it "no type variable" $ do
+                        (_, logs) <- testTM (apply [t|Int|] userType)
+                        logs `shouldBe` [noTypeParameter]
   where
     testTM = runQ . execTM
