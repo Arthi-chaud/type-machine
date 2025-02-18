@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeApplications #-}
 
-module TypeMachine.TH.Is (isClassName, toFuncName, deriveIs, defineIs) where
+module TypeMachine.TH.Is (isClassName, deriveIs, defineIs) where
 
 import Control.Monad (MonadPlus (mzero), forM)
 import qualified Data.Map.Strict as Map
@@ -21,11 +21,11 @@ import TypeMachine.Type (fields, reifyType)
 isClassName :: Name -> Name
 isClassName = mkName . ("Is" ++) . capitalize . nameBase
 
--- | Get the name of the 'To' function generated for the given type
+-- | Get the name of the 'to' function generated for the given type
 --
 -- @
 -- > toFuncName ''User
---   ToUser
+--   toUser
 -- @
 toFuncName :: Name -> Name
 toFuncName = mkName . ("to" ++) . capitalize . nameBase
@@ -77,6 +77,8 @@ deriveIs sourceTypeName destTypeName = do
     fieldIsOptional _ = return False
     ifM mbool t f = do bool <- mbool; if bool then t else f
 
+----- Definition
+
 -- | Define the 'Is' class for the given type and generate the 'To' function
 --
 -- @
@@ -98,12 +100,16 @@ defineIs tyName = do
     ty <- reifyType tyName
     classTypeVar <- newName "a"
     let classFuncs = vbtToFunDec classTypeVar <$> Map.toList (fields ty)
-    to <- defineTo tyName
+    to <- defineTo tyName classTypeVar
     isItself <- deriveIs tyName tyName
     return $
-        ClassD [] (isClassName tyName) [PlainTV classTypeVar BndrReq] [] classFuncs
-            : to
-            ++ isItself
+        ClassD
+            []
+            (isClassName tyName)
+            [PlainTV classTypeVar BndrReq]
+            []
+            (classFuncs ++ to)
+            : isItself
   where
     -- vbtToFunDec a id Int == getId :: a -> Int
     vbtToFunDec :: Name -> (String, BangType) -> Dec
@@ -117,18 +123,18 @@ defineIs tyName = do
 --
 -- @
 --  > data User = User { id :: Int, name :: String }
---  > defineIs ''User
+--  > defineIs ''User a
 --
 --  toUser :: (IsUser a) => a -> User
 --  toUser from = User (getId from) (getName from)
 -- @
-defineTo :: Name -> Q [Dec]
-defineTo tyName = do
+defineTo :: Name -> Name -> Q [Dec]
+defineTo tyName tyVarName = do
     ty <- reifyType tyName
     toFuncType <-
         sigD
             toName
-            [t|forall a. ($(conT $ isClassName tyName) a) => a -> $(conT tyName)|]
+            [t|$(varT tyVarName) -> $(conT tyName)|]
     toFuncBody <-
         let
             from = mkName "from"
