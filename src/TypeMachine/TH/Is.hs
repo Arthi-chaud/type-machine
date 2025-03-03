@@ -1,11 +1,7 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
-
 module TypeMachine.TH.Is (isClassName, deriveIs, defineIs) where
 
 import Control.Monad (MonadPlus (mzero), forM)
 import qualified Data.Map.Strict as Map
-import GHC.Records (getField)
 import Language.Haskell.TH hiding (Type, reifyType)
 import qualified Language.Haskell.TH as TH
 import Text.Printf
@@ -67,9 +63,13 @@ deriveIs sourceTypeName destTypeName = do
     fieldNameToFunDec n =
         let
             memberName = mkName $ fieldNameToIsFuncName n
-            expr = [|getField @($(litT $ strTyLit n))|]
+            resName = mkName "res"
+            expr = [|$(varE resName)|]
          in
-            funD memberName [clause [] (normalB expr) []]
+            -- Note: using destTypeName makes Q think that we use the type, not the constructor
+            funD
+                memberName
+                [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
     -- Returns true is field is instance of Monad plus
     -- TODO handle non-parametric monadplus-es
     fieldIsOptional :: TH.Type -> Q Bool

@@ -38,6 +38,13 @@ ghc-options:
 - -Wpartial-fields
 - -Wredundant-constraints
 
+executables:
+  vector-example:
+    source-dirs: examples
+    main: Vector.hs
+    dependencies:
+    - type-machine
+
 library:
   source-dirs: src
   dependencies:
