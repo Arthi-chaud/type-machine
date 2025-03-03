@@ -58,6 +58,28 @@ library
     , template-haskell
   default-language: Haskell2010
 
+executable vector-example
+  main-is: Vector.hs
+  other-modules:
+      Paths_type_machine
+  autogen-modules:
+      Paths_type_machine
+  hs-source-dirs:
+      examples
+  default-extensions:
+      TemplateHaskell
+      LambdaCase
+      TupleSections
+      RankNTypes
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , syb
+    , template-haskell
+    , type-machine
+  default-language: Haskell2010
+
 test-suite type-machine-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs

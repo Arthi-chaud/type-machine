@@ -17,8 +17,6 @@ It can also generate a conversion type-class that allows you to access fields an
 
 ```haskell
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
 data User = User {
