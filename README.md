@@ -70,19 +70,22 @@ $(declareIs ''User)
 --     getId :: a -> Int
 --     getName :: a -> String
 --     getEmail :: a -> String
+--     setId :: Int -> a -> a
+--     setName :: String -> a -> a
+--     setEmail :: String -> a -> a
 --
 -- instance IsUser User where
 --     getId = id
 --     getName = name
 --     getEmail = email
+--     setId = ...
+--     setName = ...
+--     setEmail = ...
 
 $(type_ "UserWithoutEmail" (omit ["email"] <::> ''User))
 $(deriveIs ''User ''UserWithoutEmail)
 -- instance IsUser UserWithoutEmail where
---     getId = id
---     getName = name
---     getEmail = Nothing 
-
+--     ...
 
 $(type_ "UserWithoutId" (omit ["id"] <::> ''User))
 $(deriveIs ''User ''UserWithoutId) -- Will fail
