@@ -1,6 +1,7 @@
 module TypeMachine.TH.Is (isClassName, deriveIs, defineIs) where
 
 import Control.Monad (MonadPlus (mzero), forM)
+import Data.List (singleton)
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type, reifyType)
 import qualified Language.Haskell.TH as TH
@@ -39,13 +40,16 @@ deriveIs sourceTypeName destTypeName = do
     destFields <- fields <$> reifyType destTypeName
     sourceFields <- fields <$> reifyType sourceTypeName
     let className = mkName ("Is" ++ nameBase sourceTypeName)
-    classFuncs <- forM (Map.toList sourceFields) $ \(n, (_, t)) ->
+    classFuncs <- fmap concat $ forM (zip [0 ..] $ Map.toList sourceFields) $ \(i, (n, (_, t))) ->
         case Map.lookup n destFields of
-            Just _ -> fieldNameToFunDec n
+            Just _ -> do
+                getter <- fieldToGetter n
+                setter <- fieldToSetter (length destFields) i n
+                return [getter, setter]
             Nothing ->
                 ifM
                     (fieldIsOptional t)
-                    (fieldNameToMemptyFunDec n)
+                    (singleton <$> fieldNameToMemptyFunDec n)
                     ( fail
                         ( printf
                             "Type-Machine Error: Cannot define instance of %s for %s. Field '%s' is missing in %s "
@@ -59,19 +63,40 @@ deriveIs sourceTypeName destTypeName = do
   where
     destTypeStr = nameBase destTypeName
     fieldNameToMemptyFunDec n =
-        funD (mkName $ fieldNameToIsFuncName n) [clause [] (normalB [|const mzero|]) []]
-    fieldNameToFunDec n =
-        let
-            memberName = mkName $ fieldNameToIsFuncName n
+        funD (mkName $ fieldNameToIsGetter n) [clause [] (normalB [|const mzero|]) []]
+    fieldToGetter n = do
+        let funName = mkName $ fieldNameToIsGetter n
             resName = mkName "res"
             expr = [|$(varE resName)|]
-         in
-            -- Note: using destTypeName makes Q think that we use the type, not the constructor
-            funD
-                memberName
-                [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
-    -- Returns true is field is instance of Monad plus
+        -- Note: using destTypeName makes Q think that we use the type, not the constructor
+        funD
+            funName
+            [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
+
+    fieldToSetter fieldCount fieldPos fieldName = do
+        fieldsNames <-
+            forM
+                [0 .. (fieldCount - 1)]
+                ( \i ->
+                    if i == fieldPos
+                        then return $ mkName "_"
+                        else newName $ "f" ++ show i
+                )
+        let funName = mkName $ fieldNameToIsSetter fieldName
+        let newValueName = mkName "new"
+        let patt = ConP (mkName destTypeStr) [] (VarP <$> fieldsNames)
+        let body =
+                foldl
+                    ( \res f ->
+                        res `AppE` case nameBase f of
+                            "_" -> VarE newValueName
+                            _ -> VarE f
+                    )
+                    (ConE $ mkName destTypeStr)
+                    fieldsNames
+        funD funName [clause [varP newValueName, return $ patt] (normalB $ return body) []]
     -- TODO handle non-parametric monadplus-es
+    -- Returns true is field is instance of Monad plus
     fieldIsOptional :: TH.Type -> Q Bool
     fieldIsOptional (AppT t _) = isInstance ''MonadPlus [t]
     fieldIsOptional _ = return False
@@ -89,17 +114,22 @@ deriveIs sourceTypeName destTypeName = do
 --       getId :: a -> Int
 --       getName :: a -> String
 --
+--       setId :: Int -> a -> a
+--       setName :: String -> a -> a
+--
+--       toUser :: (IsUser a) => a -> User
+--       toUser a = User (getId a) (getName a)
+--
 --  instance IsUser User where
 --       ...
 --
---  toUser :: (IsUser a) => a -> User
---  toUser a = User (getId a) (getName a)
 -- @
 defineIs :: Name -> Q [Dec]
 defineIs tyName = do
     ty <- reifyType tyName
     classTypeVar <- newName "a"
-    let classFuncs = vbtToFunDec classTypeVar <$> Map.toList (fields ty)
+    getters <- mapM (vbtToGetter classTypeVar) (Map.toList $ fields ty)
+    setters <- mapM (vbtToSetter classTypeVar) (Map.toList $ fields ty)
     to <- defineTo tyName classTypeVar
     isItself <- deriveIs tyName tyName
     return $
@@ -108,22 +138,29 @@ defineIs tyName = do
             (isClassName tyName)
             [PlainTV classTypeVar BndrReq]
             []
-            (classFuncs ++ to)
+            (getters ++ setters ++ to)
             : isItself
   where
-    -- vbtToFunDec a id Int == getId :: a -> Int
-    vbtToFunDec :: Name -> (String, BangType) -> Dec
-    vbtToFunDec classtypeVar (n, (_, t)) =
+    -- vbtToGetter a id Int == getId :: a -> Int
+    vbtToGetter :: Name -> (String, BangType) -> Q Dec
+    vbtToGetter classtypeVar (n, (_, t)) =
         let
-            memberName = mkName $ fieldNameToIsFuncName n
+            memberName = mkName $ fieldNameToIsGetter n
          in
-            SigD memberName (AppT (AppT ArrowT (VarT classtypeVar)) t)
+            sigD memberName [t|$(varT classtypeVar) -> $(return t)|]
+
+    -- vbtToSetter a id Int == setId ::  Int -> a -> a
+    vbtToSetter :: Name -> (String, BangType) -> Q Dec
+    vbtToSetter classtypeVar (n, (_, t)) =
+        let
+            memberName = mkName $ fieldNameToIsSetter n
+         in
+            sigD memberName [t|$(return t) -> $(varT classtypeVar) -> $(varT classtypeVar)|]
 
 -- | Generate the 'To' function
 --
 -- @
 --  > data User = User { id :: Int, name :: String }
---  > defineIs ''User a
 --
 --  toUser :: (IsUser a) => a -> User
 --  toUser from = User (getId from) (getName from)
@@ -140,7 +177,7 @@ defineTo tyName tyVarName = do
             from = mkName "from"
             app =
                 foldl'
-                    (\r n -> [|$r ($(varE $ mkName $ fieldNameToIsFuncName n) $(varE from))|])
+                    (\r n -> [|$r ($(varE $ mkName $ fieldNameToIsGetter n) $(varE from))|])
                     (conE $ mkName $ nameBase tyName)
                     (Map.keys $ fields ty)
          in
@@ -150,5 +187,8 @@ defineTo tyName tyVarName = do
     toName = toFuncName tyName
 
 -- Internal
-fieldNameToIsFuncName :: String -> String
-fieldNameToIsFuncName = ("get" ++) . capitalize
+fieldNameToIsGetter :: String -> String
+fieldNameToIsGetter = ("get" ++) . capitalize
+
+fieldNameToIsSetter :: String -> String
+fieldNameToIsSetter = ("set" ++) . capitalize
