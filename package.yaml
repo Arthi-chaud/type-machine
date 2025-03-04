@@ -40,11 +40,16 @@ ghc-options:
 
 executables:
   vector-example:
-    source-dirs: examples
-    main: Vector.hs
+    main: examples/Vector.hs
     dependencies:
     - type-machine
-
+  # It is expected for this to not typecheck
+  # Nix setup is broken shrug
+  # miso-example:
+  #   main: examples/Miso.hs
+  #   dependencies:
+  #   - type-machine
+  #   - miso
 library:
   source-dirs: src
   dependencies:
