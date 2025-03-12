@@ -43,6 +43,12 @@ executables:
     main: examples/Vector.hs
     dependencies:
     - type-machine
+  # Won't compile because of stagin restrictions requiring 2 files
+  # Too lazy to do that
+  # rename-example:
+  #   main: examples/Rename.hs
+  #   dependencies:
+  #   - type-machine
   # It is expected for this to not typecheck
   # Nix setup is broken shrug
   # miso-example:

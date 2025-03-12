@@ -58,8 +58,8 @@ library
     , template-haskell
   default-language: Haskell2010
 
-executable miso-example
-  main-is: examples/Miso.hs
+executable rename-example
+  main-is: examples/Rename.hs
   other-modules:
       Paths_type_machine
   autogen-modules:
@@ -73,7 +73,6 @@ executable miso-example
   build-depends:
       base >=4.7 && <5
     , containers
-    , miso
     , syb
     , template-haskell
     , type-machine
