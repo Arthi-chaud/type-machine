@@ -49,17 +49,27 @@ typeToDec (Type n fs tp) =
 -- | Transform a Template Haskell 'Dec' into a TypeMachine's type
 --
 -- For this to succeed, the input type must have exactly one record constructor
-decToType :: (MonadFail m) => Dec -> m Type
+decToType :: (Quasi m) => Dec -> m Type
 decToType dec = do
-    (tyName, tybndrs, vbt) <- case dec of
-        (DataD _ tyName tybndrs _ cons _) -> (tyName,tybndrs,) <$> getRecordConstructorVars cons
-        (NewtypeD _ tyName tybndrs _ con _) -> (tyName,tybndrs,) <$> getRecordConstructorVars [con]
-        _ -> fail "Unsupported data type" -- TODO Clearer message
+    (tyName, tyBndrs, cons) <- case dec of
+        (TySynD _ _ (ConT tyconsName)) -> do
+            tyconsInfo <- runQ $ reify tyconsName
+            case tyconsInfo of
+                TyConI dec' -> getTyInfo dec'
+                _ -> fail failMsg
+        _ -> getTyInfo dec
+    vbt <- getRecordConstructorVars cons
     let tparams =
-            tybndrs <&> \case
+            tyBndrs <&> \case
                 PlainTV n _ -> (n, Nothing)
                 KindedTV n _ k -> (n, Just k)
     return $ Type tyName (vbtToFields vbt) (first nameBase <$> tparams)
+  where
+    failMsg = "Unsupported data type: Expected record type with exactly one constructor"
+    getTyInfo decl = case decl of
+        (DataD _ tyName tybndrs _ cons _) -> return (tyName, tybndrs, cons)
+        (NewtypeD _ tyName tybndrs _ con _) -> return (tyName, tybndrs, [con])
+        _ -> fail failMsg
 
 -- | Wrapper around the TH's 'reify' function. Fails if the type is not a datatype declaration
 reifyType :: Name -> Q Type
