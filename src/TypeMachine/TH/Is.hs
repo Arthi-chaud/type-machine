@@ -45,7 +45,7 @@ deriveIs sourceTypeName destTypeName = do
             Just _ -> do
                 getter <- fieldToGetter n
                 setter <- fieldToSetter (length destFields) i n
-                return [getter, setter]
+                return $ getter ++ setter
             Nothing ->
                 ifM
                     (fieldIsOptional t)
@@ -69,9 +69,12 @@ deriveIs sourceTypeName destTypeName = do
             resName = mkName "res"
             expr = [|$(varE resName)|]
         -- Note: using destTypeName makes Q think that we use the type, not the constructor
-        funD
-            funName
-            [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
+        getter <-
+            funD
+                funName
+                [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
+        let inlinePragma = PragmaD $ InlineP funName Inline FunLike AllPhases
+        return [inlinePragma, getter]
 
     fieldToSetter fieldCount fieldPos fieldName = do
         fieldsNames <-
@@ -94,7 +97,10 @@ deriveIs sourceTypeName destTypeName = do
                     )
                     (ConE $ mkName destTypeStr)
                     fieldsNames
-        funD funName [clause [varP newValueName, return $ patt] (normalB $ return body) []]
+
+        let inlinePragma = PragmaD $ InlineP funName Inline FunLike AllPhases
+        setter <- funD funName [clause [varP newValueName, return $ patt] (normalB $ return body) []]
+        return [inlinePragma, setter]
     -- TODO handle non-parametric monadplus-es
     -- Returns true is field is instance of Monad plus
     fieldIsOptional :: TH.Type -> Q Bool
