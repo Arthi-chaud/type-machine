@@ -36,7 +36,9 @@ library
       TypeMachine.TH
       TypeMachine.TH.Is
   other-modules:
+      TypeMachine.Has
       TypeMachine.Internal.Utils
+      TypeMachine.TH.Has
       TypeMachine.TH.Internal.Utils
       TypeMachine.TM.Liftable
       Paths_type_machine
