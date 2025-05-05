@@ -84,8 +84,8 @@ test-suite type-machine-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      TestTypeMachine.Functions
-      TestTypeMachine.Is
+      TypeMachine.FunctionsSpec
+      TypeMachine.IsSpec
       Paths_type_machine
   autogen-modules:
       Paths_type_machine

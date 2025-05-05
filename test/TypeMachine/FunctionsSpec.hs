@@ -1,4 +1,4 @@
-module TestTypeMachine.Functions (specs) where
+module TypeMachine.FunctionsSpec (spec) where
 
 import Control.Exception.Base
 import Control.Monad
@@ -12,8 +12,8 @@ import TypeMachine.Log
 import TypeMachine.TM (execTM)
 import TypeMachine.Type (Type (..))
 
-specs :: Spec
-specs =
+spec :: Spec
+spec =
     describe
         "Functions"
         $ do

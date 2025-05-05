@@ -1,6 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module TestTypeMachine.Is (specs) where
+module TypeMachine.IsSpec (spec) where
 
 import Test.Hspec
 import TypeMachine
@@ -16,8 +16,8 @@ $(defineIs ''User)
 $(type_ "UserWithoutOptProp" (omit ["optProp"] <::> ''User))
 $(deriveIs ''User ''UserWithoutOptProp)
 
-specs :: Spec
-specs =
+spec :: Spec
+spec =
     describe
         "'Is' typeclass"
         $ do
