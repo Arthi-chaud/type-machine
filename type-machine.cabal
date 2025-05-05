@@ -29,6 +29,7 @@ library
   exposed-modules:
       TypeMachine
       TypeMachine.Functions
+      TypeMachine.Infix
       TypeMachine.TM
       TypeMachine.Type
       TypeMachine.TM.Syntax
