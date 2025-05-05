@@ -131,6 +131,7 @@ intersection a b = do
 -- @
 intersection' :: Type -> Type -> TM Type
 intersection' = flip intersection
+{-# INLINE intersection' #-}
 
 -- | Merge two types together
 --
@@ -162,6 +163,7 @@ union a b = do
 -- @
 union' :: Type -> Type -> TM Type
 union' = flip union
+{-# INLINE union' #-}
 
 -- | Get the names of the fields in in type
 --
