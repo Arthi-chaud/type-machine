@@ -37,7 +37,6 @@ library
       TypeMachine.TH
       TypeMachine.TH.Is
   other-modules:
-      TypeMachine.Infix
       TypeMachine.Internal.Utils
       TypeMachine.TH.Internal.Utils
       TypeMachine.TM.Liftable

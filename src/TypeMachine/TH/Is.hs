@@ -1,7 +1,6 @@
 module TypeMachine.TH.Is (isClassName, deriveIs, defineIs) where
 
 import Control.Monad (MonadPlus (mzero), forM)
-import Data.List (singleton)
 import qualified Data.Map.Strict as Map
 import Language.Haskell.TH hiding (Type, reifyType)
 import qualified Language.Haskell.TH as TH
@@ -45,11 +44,15 @@ deriveIs sourceTypeName destTypeName = do
             Just _ -> do
                 getter <- fieldToGetter n
                 setter <- fieldToSetter (length destFields) i n
-                return $ getter ++ setter
+                return [getter, setter]
             Nothing ->
                 ifM
                     (fieldIsOptional t)
-                    (singleton <$> fieldNameToMemptyFunDec n)
+                    ( do
+                        getter <- fieldNameToMemptyFunDec n
+                        setter <- fieldNameToNoopFunDec n
+                        return [getter, setter]
+                    )
                     ( fail
                         ( printf
                             "Type-Machine Error: Cannot define instance of %s for %s. Field '%s' is missing in %s "
@@ -59,22 +62,33 @@ deriveIs sourceTypeName destTypeName = do
                             destTypeStr
                         )
                     )
-    return [InstanceD Nothing [] (AppT (ConT className) (ConT destTypeName)) classFuncs]
+    let inlinePragmas = mkInlinePragmas $ Map.keys sourceFields
+        instanceDec =
+            InstanceD
+                Nothing
+                []
+                (AppT (ConT className) (ConT destTypeName))
+                (inlinePragmas ++ classFuncs)
+    return [instanceDec]
   where
     destTypeStr = nameBase destTypeName
     fieldNameToMemptyFunDec n =
         funD (mkName $ fieldNameToIsGetter n) [clause [] (normalB [|const mzero|]) []]
+
+    fieldNameToNoopFunDec n =
+        funD
+            (mkName $ fieldNameToIsSetter n)
+            [clause [wildP, varP inputObjName] (normalB $ varE inputObjName) []]
+      where
+        inputObjName = mkName "x"
     fieldToGetter n = do
         let funName = mkName $ fieldNameToIsGetter n
             resName = mkName "res"
             expr = [|$(varE resName)|]
         -- Note: using destTypeName makes Q think that we use the type, not the constructor
-        getter <-
-            funD
-                funName
-                [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
-        let inlinePragma = PragmaD $ InlineP funName Inline FunLike AllPhases
-        return [inlinePragma, getter]
+        funD
+            funName
+            [clause [return $ RecP (mkName destTypeStr) [(mkName n, VarP resName)]] (normalB expr) []]
 
     fieldToSetter fieldCount fieldPos fieldName = do
         fieldsNames <-
@@ -98,15 +112,22 @@ deriveIs sourceTypeName destTypeName = do
                     (ConE $ mkName destTypeStr)
                     fieldsNames
 
-        let inlinePragma = PragmaD $ InlineP funName Inline FunLike AllPhases
-        setter <- funD funName [clause [varP newValueName, return $ patt] (normalB $ return body) []]
-        return [inlinePragma, setter]
+        funD funName [clause [varP newValueName, return $ patt] (normalB $ return body) []]
     -- TODO handle non-parametric monadplus-es
     -- Returns true is field is instance of Monad plus
     fieldIsOptional :: TH.Type -> Q Bool
     fieldIsOptional (AppT t _) = isInstance ''MonadPlus [t]
     fieldIsOptional _ = return False
     ifM mbool t f = do bool <- mbool; if bool then t else f
+    mkInlinePragmas :: [String] -> [Dec]
+    mkInlinePragmas fieldNames = mkInlinePragma . mkName <$> setterAndGetterNames
+      where
+        setterAndGetterNames =
+            foldr
+                (\field rest -> fieldNameToIsSetter field : fieldNameToIsGetter field : rest)
+                []
+                fieldNames
+        mkInlinePragma fName = PragmaD $ InlineP fName Inline FunLike AllPhases
 
 ----- Definition
 
