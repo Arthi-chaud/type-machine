@@ -104,3 +104,31 @@ test-suite type-machine-test
     , template-haskell
     , type-machine
   default-language: Haskell2010
+
+benchmark bench
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Build
+      Traverse
+      Paths_type_machine
+  autogen-modules:
+      Paths_type_machine
+  hs-source-dirs:
+      benchmark/
+  default-extensions:
+      TemplateHaskell
+      LambdaCase
+      TupleSections
+      RankNTypes
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-T -O2 -Wno-unused-top-binds -Wno-orphans -Wno-redundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , criterion
+    , extensible
+    , superrecord
+    , syb
+    , template-haskell
+    , type-machine
+  default-language: Haskell2010
