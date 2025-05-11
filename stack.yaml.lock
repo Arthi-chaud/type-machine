@@ -3,7 +3,39 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/topics/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: extensible-0.9.2@sha256:9a79f5f82b16b053231ed9045b4810728423525b0a3efeaa2427afd83ddf42d9,3225
+    pantry-tree:
+      sha256: b7c8680a2f60f17afccc22e2842c1632edcb4ebcb57b6dd539104a3f7c51d9c8
+      size: 2040
+  original:
+    hackage: extensible-0.9.2
+- completed:
+    hackage: hashable-1.4.7.0@sha256:573f3ab242f75465a0d67ce9d84202650a1606575e6dbd6d31ffcf4767a9a379,6629
+    pantry-tree:
+      sha256: 9ec168505c52fa389b7447a1251b302e32537adeecac88c2aa72beed53beb3bd
+      size: 1578
+  original:
+    hackage: hashable-1.4.7.0
+- completed:
+    hackage: record-0.4.2@sha256:146e7087ef12671a9b30aaad2d42fbfe5fff826437356d073367d06e9fcab2d7,1947
+    pantry-tree:
+      sha256: 21d51f51d3130fef9972ea96f6fb13362e9a6ae3d7c9ead94ef15b1ae419a324
+      size: 322
+  original:
+    hackage: record-0.4.2
+- completed:
+    name: superrecord
+    pantry-tree:
+      sha256: f44e6a84c59a70c74abed9b401129d4dfbe6087b81b160636a8c99c0da585fa0
+      size: 985
+    sha256: c23ffc5ac92485aa0a39c1326707c80fba946bc5b5dd311799873bed03914bb4
+    size: 21688
+    url: https://github.com/possehl-analytics/superrecord/archive/5a7d6867c6c2a182f25ac5ebb9f2b193218f2b13.tar.gz
+    version: 0.5.1.0
+  original:
+    url: https://github.com/possehl-analytics/superrecord/archive/5a7d6867c6c2a182f25ac5ebb9f2b193218f2b13.tar.gz
 snapshots:
 - completed:
     sha256: d4b754036615466653040ce9742690e95f5fed08649a96e2885b50d2cf8f25fc
