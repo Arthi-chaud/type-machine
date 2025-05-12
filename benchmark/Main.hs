@@ -1,8 +1,7 @@
 module Main (main) where
 
-import qualified Build
+import qualified Benchmark
 import Criterion.Main
-import qualified Traverse
 
 main :: IO ()
-main = defaultMain [Build.benchmark, Traverse.benchmark]
+main = defaultMain [Benchmark.benchmark]
