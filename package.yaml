@@ -92,7 +92,7 @@ benchmarks:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-T
-    - -O2
+    # - -O2
     - -Wno-unused-top-binds
     - -Wno-orphans
     - -Wno-redundant-constraints
@@ -100,5 +100,7 @@ benchmarks:
     - type-machine 
     - criterion
     - extensible
+    - mtl
+    - lens
     # - record
     - superrecord
