@@ -4,4 +4,4 @@ import qualified Benchmark
 import Criterion.Main
 
 main :: IO ()
-main = defaultMain [Benchmark.benchmark]
+main = defaultMain Benchmark.benchmarks

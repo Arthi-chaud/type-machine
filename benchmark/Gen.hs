@@ -14,6 +14,13 @@ import SuperRecord
 import TypeMachine
 import TypeMachine.Type (Type (Type))
 
+genWithFieldCount :: Int -> Q [Dec]
+genWithFieldCount n = do
+    tm <- genTMRecord n
+    superr <- genSuperrecord n
+    extensible <- genExtensible n
+    return $ tm ++ superr ++ extensible
+
 withNFields :: Int -> String -> (Int -> Q TH.Type) -> TM Type
 withNFields n fieldPrefix getType = do
     fields <- forM [0 .. n - 1] $ \i -> do
@@ -135,9 +142,14 @@ genExtensibleType :: String -> Int -> Q [Dec]
 genExtensibleType tyName fCount = do
     f <- mkField (unwords fieldNames)
     fields <- forM fieldNames $ \fName -> do [t|$(return $ LitT $ StrTyLit fName) Data.Extensible.:> Int|]
-    tyList <- foldr (\arg rest -> [t|$(return arg) ': $rest|]) (return PromotedNilT) fields
-    ty <- [t|Data.Extensible.Record $(return tyList)|]
-    return $ f ++ [TySynD (mkName tyName) [] ty]
+    fieldsTy <- foldr (\arg rest -> [t|$(return arg) ': $rest|]) (return PromotedNilT) fields
+    let fieldsTyName = mkName $ tyName ++ "Fields"
+    ty <- [t|Data.Extensible.Record $(conT fieldsTyName)|]
+    return $
+        f
+            ++ [ TySynD fieldsTyName [] fieldsTy
+               , TySynD (mkName tyName) [] ty
+               ]
   where
     fieldNames = getExtensibleFieldName fCount <$> [0 .. fCount - 1]
 
