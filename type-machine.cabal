@@ -115,7 +115,7 @@ benchmark bench
   autogen-modules:
       Paths_type_machine
   hs-source-dirs:
-      benchmark/
+      benchmarks/runtime
   default-extensions:
       TemplateHaskell
       LambdaCase

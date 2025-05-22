@@ -86,7 +86,7 @@ tests:
 
 benchmarks:
   bench:
-    source-dirs:      benchmark/
+    source-dirs:      benchmarks/runtime
     main:             Main.hs
     ghc-options:
     - -threaded

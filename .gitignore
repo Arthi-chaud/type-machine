@@ -1,2 +1,8 @@
 .stack-work/
 *~
+# Benchmark
+*.hi
+*.o
+Extensible
+SR
+TM
