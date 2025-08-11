@@ -20,8 +20,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -54,8 +52,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT }}
       - name: Setup GHC
         uses: ./.github/actions/cache-deps
         with:
