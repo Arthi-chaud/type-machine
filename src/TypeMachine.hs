@@ -12,7 +12,6 @@ module TypeMachine (
     -- * Infixes
     (<:>),
     (<::>),
-    (<.>),
 
     -- * Internal types
     Type,

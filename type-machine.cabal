@@ -5,9 +5,8 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           type-machine
-version:        0.1.0.0
-synopsis:       Template Haskell-based Type functions on record types in Haskell
-description:    Please see the README on GitHub at <https://github.com/Arthi-chaud/type-machine#readme>
+version:        0.1.0.1
+synopsis:       Type-level functions for record types
 category:       Types
 homepage:       https://github.com/Arthi-chaud/type-machine#readme
 bug-reports:    https://github.com/Arthi-chaud/type-machine/issues
@@ -29,17 +28,17 @@ library
   exposed-modules:
       TypeMachine
       TypeMachine.Functions
-      TypeMachine.Infix
+      TypeMachine.Functions.Infix
       TypeMachine.TM
       TypeMachine.Type
       TypeMachine.TM.Syntax
+      TypeMachine.TM.Liftable
       TypeMachine.Log
       TypeMachine.TH
       TypeMachine.TH.Is
   other-modules:
       TypeMachine.Internal.Utils
       TypeMachine.TH.Internal.Utils
-      TypeMachine.TM.Liftable
       Paths_type_machine
   autogen-modules:
       Paths_type_machine
@@ -53,10 +52,10 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
-    , containers
-    , mtl
-    , syb
-    , template-haskell
+    , containers >=0.7 && <0.9
+    , mtl >=2.3.1 && <2.4
+    , syb ==0.7.2.*
+    , template-haskell >=2.22 && <2.24
   default-language: Haskell2010
 
 executable vector-example
@@ -73,9 +72,10 @@ executable vector-example
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
-    , containers
-    , syb
-    , template-haskell
+    , containers >=0.7 && <0.9
+    , mtl >=2.3.1 && <2.4
+    , syb ==0.7.2.*
+    , template-haskell >=2.22 && <2.24
     , type-machine
   default-language: Haskell2010
 
@@ -98,10 +98,11 @@ test-suite type-machine-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -Wno-unused-top-binds
   build-depends:
       base >=4.7 && <5
-    , containers
+    , containers >=0.7 && <0.9
     , hspec
-    , syb
-    , template-haskell
+    , mtl >=2.3.1 && <2.4
+    , syb ==0.7.2.*
+    , template-haskell >=2.22 && <2.24
     , type-machine
   default-language: Haskell2010
 
@@ -124,13 +125,13 @@ benchmark bench
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-T -Wno-unused-top-binds -Wno-orphans -Wno-redundant-constraints
   build-depends:
       base >=4.7 && <5
-    , containers
+    , containers >=0.7 && <0.9
     , criterion
     , extensible
     , lens
     , mtl
     , superrecord
-    , syb
-    , template-haskell
+    , syb ==0.7.2.*
+    , template-haskell >=2.22 && <2.24
     , type-machine
   default-language: Haskell2010

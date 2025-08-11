@@ -1,4 +1,4 @@
-module TypeMachine.Infix (
+module TypeMachine.Functions.Infix (
     -- * Intersection
     (<#|>),
     (<:#|>),

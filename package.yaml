@@ -1,5 +1,5 @@
 name:                type-machine
-version:             0.1.0.0
+version:             0.1.0.1
 github:              "Arthi-chaud/type-machine"
 license:             BSD-3-Clause
 author:              "Arthi-chaud"
@@ -10,16 +10,15 @@ extra-source-files:
 - README.md
 - CHANGELOG.md
 
-synopsis:            Template Haskell-based Type functions on record types in Haskell
+synopsis:            Type-level functions for record types
 category:            Types 
-
-description:         Please see the README on GitHub at <https://github.com/Arthi-chaud/type-machine#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- containers
-- template-haskell
-- syb
+- containers >= 0.7 && < 0.9
+- template-haskell >= 2.22 && < 2.24
+- syb >= 0.7.2 && < 0.7.3
+- mtl >= 2.3.1 && < 2.4
 
 default-extensions:
 - TemplateHaskell
@@ -58,15 +57,14 @@ executables:
   #   - miso
 library:
   source-dirs: src
-  dependencies:
-  - mtl
   exposed-modules:
   - TypeMachine
   - TypeMachine.Functions
-  - TypeMachine.Infix
+  - TypeMachine.Functions.Infix
   - TypeMachine.TM
   - TypeMachine.Type
   - TypeMachine.TM.Syntax
+  - TypeMachine.TM.Liftable
   - TypeMachine.Log
   - TypeMachine.TH
   - TypeMachine.TH.Is
