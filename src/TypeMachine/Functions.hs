@@ -23,6 +23,11 @@ module TypeMachine.Functions (
     apply,
     applyMany,
 
+    -- * With Selector
+    intersectionWithSelector,
+    unionWithSelector,
+    Selector,
+
     -- * Utils
     keysOf,
 )
@@ -41,6 +46,7 @@ import TypeMachine.Internal.Utils
 import TypeMachine.Log
 import TypeMachine.TM
 import TypeMachine.Type
+import Prelude hiding (Either (..))
 
 -- | Mark fields are required
 --
@@ -111,12 +117,7 @@ omit namesToOmit ty = do
 --  data _ = { b :: Int }
 -- @
 intersection :: Type -> Type -> TM Type
-intersection a b = do
-    failIfHasTypeVariables a
-    failIfHasTypeVariables b
-    let finalType = a{fields = Map.intersection (fields a) (fields b)}
-    logIfEmptyType finalType
-    return finalType
+intersection = intersectionWithSelector (const Left)
 
 -- | Keep the fields present in both types
 --
@@ -130,8 +131,24 @@ intersection a b = do
 --  data _ = { b :: String }
 -- @
 intersection' :: Type -> Type -> TM Type
-intersection' = flip intersection
+intersection' = intersectionWithSelector (const Right)
 {-# INLINE intersection' #-}
+
+-- | Variant of 'intersection' where user can decide which value to keep (the left object's or the right's) in case of overlap
+intersectionWithSelector :: (String -> Selector) -> Type -> Type -> TM Type
+intersectionWithSelector select a b = do
+    failIfHasTypeVariables a
+    failIfHasTypeVariables b
+    let finalType =
+            a
+                { fields =
+                    Map.intersectionWithKey
+                        (\key aField bField -> if select key == Left then aField else bField)
+                        (fields a)
+                        (fields b)
+                }
+    logIfEmptyType finalType
+    return finalType
 
 -- | Merge two types together
 --
@@ -145,10 +162,7 @@ intersection' = flip intersection
 --  data _ = { a :: Int, b :: Int, c :: Void }
 -- @
 union :: Type -> Type -> TM Type
-union a b = do
-    failIfHasTypeVariables a
-    failIfHasTypeVariables b
-    return $ a{fields = Map.union (fields a) (fields b)}
+union = unionWithSelector (const Left)
 
 -- | Merge two types together
 --
@@ -162,8 +176,22 @@ union a b = do
 --  data _ = { a :: Int, b :: String, c :: Void }
 -- @
 union' :: Type -> Type -> TM Type
-union' = flip union
+union' = unionWithSelector (const Right)
 {-# INLINE union' #-}
+
+-- | Variant of 'union' where user can decide which value to keep (the left object's or the right's) in case of overlap
+unionWithSelector :: (String -> Selector) -> Type -> Type -> TM Type
+unionWithSelector select a b = do
+    failIfHasTypeVariables a
+    failIfHasTypeVariables b
+    return $
+        a
+            { fields =
+                Map.unionWithKey
+                    (\key aField bField -> if select key == Left then aField else bField)
+                    (fields a)
+                    (fields b)
+            }
 
 -- | Get the names of the fields in in type
 --
@@ -273,6 +301,9 @@ apply qt ty@(Type _ f ((tp, _) : tps)) = do
 -- @
 applyMany :: [Q TH.Type] -> Type -> TM Type
 applyMany typeArgs ty = foldM (flip apply) ty typeArgs
+
+-- | Selector for functions like 'intersectionWithSelector'
+data Selector = Left | Right deriving (Eq, Show)
 
 -- Utils for logs
 
