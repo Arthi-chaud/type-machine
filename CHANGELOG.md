@@ -1,5 +1,9 @@
 # Changelog for `type-machine`
 
+## 0.1.0.2 - 2025-09-02
+
+- Add `union`/`intersectionWithSelector`
+
 ## 0.1.0.1 - 2025-08-11
 
 - Expose 'Liftable' module

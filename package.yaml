@@ -1,47 +1,47 @@
-name:                type-machine
-version:             0.1.0.1
-github:              "Arthi-chaud/type-machine"
-license:             BSD-3-Clause
-author:              "Arthi-chaud"
-maintainer:          "aj530@kent.ac.uk"
-copyright:           "2025 Arthi-chaud"
+name: type-machine
+version: 0.1.0.2
+github: "Arthi-chaud/type-machine"
+license: BSD-3-Clause
+author: "Arthi-chaud"
+maintainer: "aj530@kent.ac.uk"
+copyright: "2025 Arthi-chaud"
 
 extra-source-files:
-- README.md
-- CHANGELOG.md
+  - README.md
+  - CHANGELOG.md
 
-synopsis:            Type-level functions for record types
-category:            Types 
+synopsis: Type-level functions for record types
+category: Types
 
 dependencies:
-- base >= 4.7 && < 5
-- containers >= 0.7 && < 0.9
-- template-haskell >= 2.22 && < 2.24
-- syb >= 0.7.2 && < 0.7.3
-- mtl >= 2.3.1 && < 2.4
+  - base >= 4.7 && < 5
+  - containers >= 0.7 && < 0.9
+  - template-haskell >= 2.22 && < 2.24
+  - syb >= 0.7.2 && < 0.7.3
+  - mtl >= 2.3.1 && < 2.4
 
 default-extensions:
-- TemplateHaskell
-- LambdaCase
-- TupleSections
-- RankNTypes
+  - TemplateHaskell
+  - LambdaCase
+  - TupleSections
+  - RankNTypes
 
 ghc-options:
-- -Wall
-- -Wcompat
-- -Widentities
-- -Wincomplete-record-updates
-- -Wincomplete-uni-patterns
-- -Wmissing-export-lists
-- -Wmissing-home-modules
-- -Wpartial-fields
-- -Wredundant-constraints
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
 
 executables:
   vector-example:
     main: examples/Vector.hs
     dependencies:
-    - type-machine
+      - type-machine
   # Won't compile because of stagin restrictions requiring 2 files
   # Too lazy to do that
   # rename-example:
@@ -58,47 +58,47 @@ executables:
 library:
   source-dirs: src
   exposed-modules:
-  - TypeMachine
-  - TypeMachine.Functions
-  - TypeMachine.Functions.Infix
-  - TypeMachine.TM
-  - TypeMachine.Type
-  - TypeMachine.TM.Syntax
-  - TypeMachine.TM.Liftable
-  - TypeMachine.Log
-  - TypeMachine.TH
-  - TypeMachine.TH.Is
+    - TypeMachine
+    - TypeMachine.Functions
+    - TypeMachine.Functions.Infix
+    - TypeMachine.TM
+    - TypeMachine.Type
+    - TypeMachine.TM.Syntax
+    - TypeMachine.TM.Liftable
+    - TypeMachine.Log
+    - TypeMachine.TH
+    - TypeMachine.TH.Is
 
 tests:
   type-machine-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -Wno-unused-top-binds
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wno-unused-top-binds
     dependencies:
-    - type-machine
-    - hspec
+      - type-machine
+      - hspec
 
 benchmarks:
   bench:
-    source-dirs:      benchmarks/runtime
-    main:             Main.hs
+    source-dirs: benchmarks/runtime
+    main: Main.hs
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-T
-    # - -O2
-    - -Wno-unused-top-binds
-    - -Wno-orphans
-    - -Wno-redundant-constraints
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-T
+      # - -O2
+      - -Wno-unused-top-binds
+      - -Wno-orphans
+      - -Wno-redundant-constraints
     dependencies:
-    - type-machine 
-    - criterion
-    - extensible
-    - mtl
-    - lens
-    # - record
-    - superrecord
+      - type-machine
+      - criterion
+      - extensible
+      - mtl
+      - lens
+      # - record
+      - superrecord
